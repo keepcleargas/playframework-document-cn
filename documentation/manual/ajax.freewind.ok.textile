@@ -1,0 +1,73 @@
+h1. Play中如何Ajax
+
+Play在内部使用了 "jQuery":http://jquery.com 这个JavaScript库，可以让我们非常方便的进行Ajax操作。为了能够在JavaScript中方便地生成某个action对应的Url，Play还提供了一个 @jsAction@ 标签，简化操作。
+
+h2. <a name="jsaction">配合jQuery使用jsAction标签</a>
+
+在play的页面中，我们想取得某action对应的url，通常不会手动拼出来，而是像Java中那样写成一个函数调用，由Play解析并生成。这么做的好处是，可以让Play检查我们的调用有没有错误，不会产生错误的URL。
+
+举例说明，我们在routes文件中，定义了以下的一个route：
+
+bc. GET     /hotels/list        Hotels.list
+
+其中, @Hotels.list@ 有三个参数 @search, size, page@。如果我们想得到它对应的URL，会这么做：
+
+bc. @{Hotels.list('x', 10, 1)}
+
+注意，参数值必须指定好。最终我们将得到一个这样的URL:
+
+bc. /hotels/list?page=10&search=x&size=1
+
+但有些时候，参数值无法事先确定。比如我们想在JavaScript中，利用Ajax的方法访问这个URL，而参数值是根据由用户输入的，怎么办？
+
+@#{jsAction /}@ 标签就是为了解决这个问题，它的作用是生成一个JavaScript函数，调用该函数并传入一些参数后，会生成相应的正确的url。
+
+先写一段完整些的例子:
+
+bc. <script type="text/javascript">
+   var listAction = #{jsAction @list(':search', ':size', ':page') /}
+   $('#result').load(
+       listAction({search: 'x', size: '10', page: '1'}), 
+       function() {
+           $('#content').css('visibility', 'visible')
+       }
+   )
+</script>
+
+在本例中，我们使用了 @jsAction@。这一行代码：
+
+bc. var listAction = #{jsAction @list(':search', ':size', ':page') /}
+
+将生成以下内容：
+
+bc. var listAction = function(options) {
+	var pattern = '/hotels/list?page=:page&search=:search&size=:size'; 
+	for(key in options) { pattern = pattern.replace(':'+key, options[key]); } 
+	return pattern 
+}
+
+可以看到，它的原理非常简单：构造一个url，里面有一些占位符，将会被替换为真实的数据。
+
+所以后面的 @listAction({search: 'x', size: '10', page: '1'})@ 调用listAction后，将返回一个正确的Url: @/hotels/list?page=10&search=x&size=1@
+
+另外， @.load()@ 函数是由jQuery提供的，它将发起一个Ajax GET请求，请求地址为它的第一个参数。第二个参数是一个函数，将在成功收到回复后被调用。
+
+最终，这段代码发送的请求如下：
+
+bc. GET /hotels/list?search=x&size=10&page=1
+
+返回值将会是一些HTML代码，这些代码将会替换掉 @#content@ 中的内容。
+
+除了HTML，jQuery还可以处理JSON或XML类型的返回值。我们只需要在对应的controller中，使用不同的render方法即可（如renderJSON, renderXML, 或者直接使用render去处理一个XML模板）。
+
+有关jQuery的详细信息，可参考 "jQuery":http://docs.jquery.com/Main_Page 官方文档。
+
+另外，如果我们需要发送一个POST请求，可以使用以下的代码：
+
+bc. $.post(listAction, function(data) {
+  $('#result').html(data);
+});
+
+p(note). **继续讨论**
+ 
+处理 %(next)"国际化":i18n%.
