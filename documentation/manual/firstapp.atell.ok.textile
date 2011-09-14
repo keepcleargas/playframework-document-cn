@@ -1,0 +1,353 @@
+h1. ‘Hello World’教程 -- 你的第一个 Play 应用
+
+这是一个非常简单的教程，它仅仅是借助著名的 'Hello World' 例子来帮助你了解 Play 框架。
+
+h2. <a>准备工作</a>
+
+首先，你必须保证工作环境中已经安装了 Java。Play 要求 **Java 5 或更新的版本**。
+
+因为我们将会很频繁地使用命令行，所以你最好使用类 Unix 的操作系统。如果你运行的是 Windows 系统，它也将正常工作；你将只需要在命令提示符中输入几个命令。
+
+接下来，你需要一个文本编辑器，或者如果你习惯使用像 Eclipse 或 NetBeans 这样功能齐全的 Java IDE 的话，你也可以使用它们。然而，Play 可以让你使用像 TextMate, Emacs 或 vi 这样简单的文本编辑器来工作，感觉会很有趣。这是因为框架本身处理了编译和部署的过程，我们将很快看到这种效果…
+
+h2. <a>安装 Play 框架</a>
+
+安装过程非常简单，在 Play 的官方下载页面下载最新版本的二进制包，然后解压它到随便一个目录下即可。
+
+p(note). 如果你使用 Windows 系统，最好避免再路径上使用空格，例如，使用 **c:\Play** 路径将比使用 **c:\Documents And Settings\user\play** 好。
+
+为了更高效地工作，你需要把 Play 目录添加到你的系统路径中，这样在命令行中直接键入 **Play** 就能够使用 Play。要检查刚才的安装是否成功，只需打开一个新的命令行，然后键入 **play** ，应该会显示 Play 基本的使用帮助。
+
+h2. <a>创建工程</a>
+
+Now that Play is correctly installed, it's time to create the hello world application. Creating a Play application is pretty easy and fully managed by the Play command line utility. That allows for standard project layouts between all Play applications. 
+现在，游戏是正确安装，它的时间来创建Hello World应用程序。创建一个播放应用程序是非常容易的，充分的播放命令行实用程序管理。这使得应用程序之间的所有播放标准项目的布局。
+
+Open a new command line and type:
+打开一个新的命令行，然后键入：
+
+bc. ~$ play new helloworld
+
+It will prompt you for the application full name. Type **Hello world**.
+它会提示你的应用程序的全名。类型**你好世界**.
+
+!images/firstapp-1!
+
+The **play new** command creates a new directory **helloworld/** and populates it with a series of files and directories, the most important being:
+发挥新的****命令创建一个新的HelloWorld目录**/**和填充的文件和目录，最重要的是一系列的：
+
+**app/** contains the application’s core, split between models, controllers and views directories. It can contain other Java package as well. This is the directory where **.java** source files live.
+**程序/ **包含应用程序的核心，模型之间，控制器和视图目录分裂。它可以包含其他的Java软件包。这是java的目录**.**活源文件。
+
+**conf/** contains all the application’s configuration files, especially the main **application.conf** file, the **routes** definition files and the **messages** files used for internationalization.
+**机密/ **包含所有的应用程序的配置文件，特别是主要** application.conf**文件，该航线******定义文件和邮件**文件用于国际化。
+
+**lib/** contains all optional Java libraries packaged as standard .jar files.
+**库/**包含了所有可选的Java库作为标准包装。jar文件。
+
+**public/** contains all the publicly available resources, which includes JavaScript, stylesheets and images directories.
+**公共/**包含了所有公开可用的资源，其中包括JavaScript，样式表和图像目录。
+
+**test/** contains all the application tests. Tests are either written either as Java JUnit tests or as Selenium tests.
+**测试/**包含所有的应用程序测试。测试是任何书面或作为Java的JUnit测试或硒的测试。
+
+p(note). Because **Play uses UTF-8** as single encoding, it's very important that all text files hosted in these directories are encoded using this charset. Make sure to configure your text editor accordingly.
+由于**播放使用UTF- 8**单编码，这是非常重要的是所有这些目录中的文本文件进行编码使用此托管字符集。确保你的文本编辑器来配置相应。
+
+Now if you're a seasoned Java developer, you may wonder where all the .class files go. The answer is nowhere: Play doesn't use any class files but reads the Java source files directly. Under the hood we use the Eclipse compiler to compile Java sources on the fly. 
+现在，如果你是一名经验丰富的Java开发人员，你可能不知道，所有的。类文件。答案是无处：播放不使用任何类文件，但读取Java源文件直接。引擎盖下，我们使用Eclipse编译器来编译Java源的飞行。
+
+That allows two very important things in the development process. The first one is that Play will detect changes you make to any Java source file and automatically reload them at runtime. The second is that when a Java exception occurs, Play will create better error reports showing you the exact source code.
+这使得在发展过程中两个非常重要的事情。第一个是，比赛将检测到任何更改将Java源文件，并在运行时自动加载它们。第二个是，当一个Java异常发生时，播放将创造更好的错误报告显示你确切的源代码。
+
+h2. <a>Running the application</a>
+
+We can now test the newly-created application. Just return to the command line, go to the newly-created **helloworld/** directory and type **play run**. Play will now load the application and start a Web server on port 9000.
+现在，我们可以测试新创建的应用程序。仅仅返回到命令行，转到新创建的HelloWorld**/ ****播放目录，然后键入运行**.现在的比赛将加载应用程序并开始在端口9000的Web服务器。
+
+You can see the new application by opening a browser to "http://localhost:9000":http://localhost:9000. A new application has a standard welcome page that just tells you that it was successfully created.
+您可以通过打开一个浏览器“http://localhost:9000“的新的应用程序：http://localhost:9000。一个新的应用程序有一个标准的欢迎页面，只是告诉你，它已成功建立。
+
+!images/guide1-2!
+
+Let’s see how the new application can display this page. 
+让我们来看看如何在新的应用程序可以显示此网页。
+
+The main entry point of your application is the **conf/routes** file. This file defines all of the application’s accessible URLs. If you open the generated routes file you will see this first ‘route’:
+您的应用程序的主入口点是**机密/路线**文件。这个文件定义了应用程序的访问的所有网址。如果您打开生成的路由文件，你会看到了一个'路线'：
+
+bc. GET		/			Application.index
+
+That simply tells Play that when the web server receives a **GET** request for the **/** path, it must call the **Application.index** Java method. In this case, **Application.index** is a shortcut for **controllers.Application.index**, because the controllers package is implicit. 
+这只是告诉播放，当Web服务器接收到****得到的**/**道路的要求，它必须调用Java方法**** Application.index。在这种情况下，** Application.index**是**** controllers.Application.index捷径，因为控制器包是隐含的。
+
+When you create standalone Java applications you generally use a single entry point defined by a method such as:
+当您创建独立的Java应用程序，您通常使用一个单一的入口点的方法，如定义：
+
+bc. public static void main(String[] args) {
+  ... 
+}
+
+A Play application has several entry points, one for each URL. We call these methods **action** methods. Action methods are defined in special classes that we call **controllers**.
+一个播放应用程序有几个入口点，每一个网址。我们呼吁这些方法****行动的方法。 Action方法中定义特殊的类，我们调用控制器**.**
+
+Let’s see how the **controllers.Application** controller looks like. Open the **helloworld/app/controllers/Application.java** source file:
+让我们来看看**** controllers.Application控制器的模样。打开**的HelloWorld/应用程序/控制器/ Application.java**源文件：
+
+bc. package controllers;
+ 
+import play.mvc.*;
+ 
+public class Application extends Controller {
+ 
+	public static void index() {
+		render();
+	}
+ 
+}
+
+You see that controller classes extend the **play.mvc.Controller** class. This class provides all useful methods for controllers, like the **render()** method we use in the index action.
+你可以看到，控制器类扩展**** play.mvc.Controller类。这个类提供了所有控制器有用的方法，如**的render（）**方法，我们在索引操作使用。
+
+The index action is defined as a **public static void** method. This is how action methods are defined. You can see that action methods are static, because the controller classes are never instantiated. They are marked public to authorize the framework to call them in response of a URL. They always return void. 
+该指数被定义为行动****公共静态无效的方法。这就是操作方法的定义。你可以看到，操作方法是静态的，因为控制班，从来没有实例化。它们被标记公开授权的框架来调用URL的响应他们。他们总是返回void。 
+
+The default index action is simple: it calls the **render()** method which tells Play to render a template. Using a template is the most common way (but not the only one) to generate the HTTP response.
+默认的索引操作很简单：它调用**的render（）方法，它告诉**播放来呈现一个模板。使用模板是最常见的方式（但不是唯一的一个）来生成HTTP响应。
+
+Templates are simple text files that live in the **/app/views** directory. Because we didn’t specify a template, the default one for this action will be used: **Application/index.html**
+模板是简单的文本文件，在** /应用程序/意见**目录生活。因为我们没有指定一个模板，此行动将使用默认：**应用/ index.html的**
+
+To see what the template looks like, open the **helloworld/app/views/Application/index.html** file:
+要查看该模板的样子，打开**的HelloWorld/应用程序/意见/应用/ index.html的**文件：
+
+bc. #{extends 'main.html' /}
+#{set title:'Home' /}
+ 
+#{welcome /}
+
+The template content seems pretty light. In fact, all you see are Play tags. Play tags are very close to JSP taglib. This is the **#{welcome /}** tag that generates the welcome message you’ve seen in the browser. 
+模板内容似乎很轻。事实上，所有你看到的是播放标签。播放标签非常接近的JSP标签库。这是欢迎的**＃{/}**标记生成欢迎消息你在浏览器中看到。
+
+The **#{extends /}** tags tells Play that this template inherits another template called **main.html**. Template inheritance is a powerful concept that allows to create complex web pages by reusing common parts.
+
+Open the **helloworld/app/views/main.html** template:
+
+bc. <!DOCTYPE html>
+<html>
+    <head>
+        <title>#{get 'title' /}</title>		
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <link rel="stylesheet" type="text/css" media="screen" 
+            href="@{'/public/stylesheets/main.css'}" />
+        <link rel="shortcut icon" type="image/png" 
+            href="@{'/public/images/favicon.png'}" />
+    </head>
+    <body>
+        #{doLayout /} 
+    </body>
+</html>
+
+Can you see the **#{doLayout /}** tag? This is where the content of **Application/index.html** will be inserted.
+
+h2. <a>Creating the form</a>
+
+We will start the ‘Hello World’ application with a form where you can enter your name.
+
+Edit the **helloworld/app/views/Application/index.html** template:
+
+bc. #{extends 'main.html' /}
+#{set title:'Home' /}
+ 
+<form action="@{Application.sayHello()}" method="GET">
+    <input type="text" name="myName" /> 
+    <input type="submit" value="Say hello!" />
+</form> 
+
+p(note). Note that we use GET as form submission method, because the form submission does not have any side effect and is idempotent.
+
+We use the **@{…}** notation to ask Play to automatically generate the URL able to invoke the **Application.sayHello** action. Now, refresh the home page in the browser.
+
+!images/firstapp-2!
+
+Oops, you get an error. This is because you reference the non-existent action **Application.sayHello**. Let’s create it in the **helloworld/app/controllers/Application.java** file:
+
+bc. package controllers;
+ 
+import play.mvc.*;
+ 
+public class Application extends Controller {
+ 
+    public static void index() {
+        render();
+    }
+    
+    public static void sayHello(String myName) {
+        render(myName);
+    }
+ 
+}
+
+We have declared the **myName** parameter in the action method signature, so it will automatically be filled with the value of the HTTP **myName** parameter, coming from the form submission. And we call render to just display a template; as we pass the **myName** variable to the **render()** call, this one will be available from the template.
+
+!images/firstapp-3!
+
+Now, if you try to enter your name and submit the form, you will get another error:
+
+!images/firstapp3!
+
+The error is pretty clear. Play tries to render the default template for this action method, but it doesn’t exist. Let’s create it in the file **helloworld/app/views/Application/sayHello.html**:
+
+bc. #{extends 'main.html' /}
+#{set title:'Home' /}
+ 
+<h1>Hello ${myName ?: 'guest'}!</h1>
+ 
+<a href="@{Application.index()}">Back to form</a>
+
+You can refresh the page.
+
+!images/firstapp-4!
+
+Look how we have used Groovy’s **?:** operator. It switches to a default value if the **myName** variable is not filled. So if you try to submit the form without entering any name, it will display ‘Hello guest’.
+
+h2. <a>Providing a better URL</a>
+
+Well, if you look at the submission URL, you will see something like:
+
+bc. http://localhost:9000/application/sayhello?myName=guillaume
+
+It is not very pretty. This is because Play used the default ‘catch all’ route.
+
+bc. *       /{controller}/{action}                  {controller}.{action}
+
+We can have a better URL by specifying a custom path for the **Application.sayHello** action. Edit the **helloworld/conf/routes** file and add this route after the first one:
+
+bc. GET     /hello                                  Application.sayHello
+
+Now go back to the form and submit it again to check that it uses the new URL pattern.
+
+h2. <a>Customizing the layout</a>
+
+As both templates that the application use so far inherit from the same **main.html** template, you can easily add a custom layout. Edit the **helloworld/app/views/main.html** file:
+
+bc. ...
+<body>
+    The Hello world app.
+    <hr/>
+    
+    #{doLayout /}
+</body>
+...
+
+Now we have a common header for both pages.
+
+!images/firstapp-5!
+
+h2. <a>Adding validation</a>
+
+We will add a little validation to the form, to make the name field required. We can use the Play validation framework to do that.
+
+Edit the **helloworld/app/controllers/Application.java** controller, and the **sayHello** action:
+
+bc. ...
+public static void sayHello(@Required String myName) {
+    if(validation.hasErrors()) {
+        flash.error("Oops, please enter your name!");
+        index();
+    }
+    render(myName);
+}
+...
+
+And don’t forget to import the **play.data.validation.*** package to get the **@Required** annotation. Play will automatically check that the myName field is filled or will add an error object to the **errors** scope. Then if there is any error, we add a message to the **flash** scope and redirect to the **index** action.
+
+The flash scope allows to keep messages during action redirection.
+
+Now you just have to display the **error** message if any. Edit the **helloworld/app/views/Application/index.html**:
+
+bc. #{extends 'main.html' /}
+#{set title:'Home' /}
+ 
+#{if flash.error}
+    <p style="color:#c00">
+        ${flash.error}
+    </p>
+#{/if}
+ 
+<form action="@{Application.sayHello()}" method="GET">
+    <input type="text" name="myName" /> 
+    <input type="submit" value="Say hello!" />
+</form>
+
+And check that it works:
+
+!images/firstapp-6!
+
+h2. <a>Writing an automated test suite</a>
+
+We will finish by writing a test for the application. As there is no Java logic to test, we need to test the Web application itself. So we will write a Selenium test.
+
+First, you need to run your application in **test mode**. Stop the application and restart it with the **test** command:
+
+bc. $ play test
+
+The **play test** command is almost the same as **play run**, except that it loads a test runner module that allows to run test suite directly from a browser. 
+
+Open a browser to the "http://localhost:9000/@tests":http://localhost:9000/@tests URL to see the test runner. Try to select all the default tests and run them; all should be green… But these default tests don’t really test anything.
+
+!images/guide2-1!
+
+A selenium test suite is typically written as an HTML file. The HTML syntax required by selenium is a little tedious (formatted using an HTML table element) to write. The good news is that Play will help you to generate it using the Play template engine and a set of tags that support a simplified syntax for selenium scenarios. 
+
+The default test suite of a newly created Play application already contains a selenium test. Open the **helloworld/test/Application.test.html** file:
+
+bc. *{ You can use plain selenium command using the selenium tag }*
+ 
+#{selenium}
+    // Open the home page, and check that no error occurred
+    open('/')
+    assertNotTitle('Application error')
+#{/selenium}
+
+This test should run without any problem with the application for now. It just open the home page and check that the page content does not contain the ‘Application error’ text.
+
+Let’s write a test for our application. Edit the test content:
+
+bc. #{selenium}
+    // Open the home page, and check that no error occurred
+    open('/')
+    assertNotTitle('Application error')
+    
+    // Check that it is the form
+    assertTextPresent('The Hello world app.')
+    
+    // Submit the form
+    clickAndWait('css=input[type=submit]')
+    
+    // Check the error
+    assertTextPresent('Oops, please enter your name!')
+    
+    // Type the name and submit
+    type('css=input[type=text]', 'bob')
+    clickAndWait('css=input[type=submit]')
+    
+    // Check the result
+    assertTextPresent('Hello bob!')
+    assertTextPresent('The Hello world app.')
+    
+    // Check the back link
+    clickAndWait('link=Back to form')
+    
+    // Home page?
+    assertTextNotPresent('Hello bob!')
+#{/selenium}
+
+We have fully tested the application. Just select this test in the test runner and click ‘Start’. Everything should be green!
+
+!images/firstapp-7!
+
+
+h2. <a>Learn more</a>
+
+This was a very simple tutorial about a very dumb application. If you want to learn more about Play, you can now check out the %(next)"Play tutorial":guide1%.

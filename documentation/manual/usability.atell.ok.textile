@@ -1,0 +1,51 @@
+h1. 易用性 - 细节和特性同样重要
+
+也许 Play 框架最引人注目的地方是，它有一个超过其它 Java Web 框架的最大优势，这个优势却不适合放到简洁的特性列表中，它只会在你使用 Play 构建东西之后才会出现，这个优势就是易用性。
+
+请注意，易用性和功能性是不同的。接下来，我不是说你不能在其它框架中做这些事情：我只是想声明，在 Play 中做这些事情会更加容易和愉快，我必须强调这一点，因为奇客们( Geeks )对易用性往往有一个认识上的盲点，他们享受解决困难的事情，而低估这些容易的事情的价值。
+
+h2. <a>由 Web 开发人员为 Web 开发人员编写</a>
+
+当你知道 Play 框架是‘由 Web 开发人员为 Web 开发人员编写’的之后，第一个给你不同感觉的暗示是，Play 将 Web 的原则和约定放在了第一位，而 Java 放在第二位，这是一种非传统的定位。换句话说，这意味着 Play 框架更加符合 W3C 的"万维网体系结构":http://www.w3.org/TR/webarch/ ，而不是符合 Java 企业版(Java EE)。
+
+h2. <a>完美主义者的 URLs</a>
+
+例如，像现在其它的 Web 框架一样，Play 框架可以支持任意的‘干净的’ URLs，而这些支持在 Servlet API 中做的远远不够。这不是巧合，"Struts URLs for perfectionists":http://www.lunatech-research.com/archives/2005/07/29/struts-urls ，Struts 1.x，一个基于 Servlet API 的 Web 框架，仍然是关于上一代 Java 技术的世界排名第三位的最流行的框架，它在 www.lunatech-research.com 上有超过160篇文章，尽管是2005年的文章。
+
+在基于 Servlet 的框架中，Servlet API 没有提供实用的 URL 路由支持；基于 Servlet 的框架通过配置 web.xml ，把所有的请求都转发到一个单独的控制器，然后在框架中，通过一些额外的配置，实现 URL 的路由机制。在这一点上，是否 Servlet API 曾经试图解决 URL 路由的问题但由于力量不足而失败，或者是否 Servlet API 只是想成为一个低层的 API 而不是让你直接可以构建 Web 应用，都已经无所谓了，无论如何，结果都一样：Web 框架需要对 Servlet API 做一层封装，而 Servlet API 本身就是 HTTP 协议的一层封装。
+
+Play 兼具了 Web 框架，HTTP API 和 HTTP 服务器，这使得 Play 可以使用一个单独的 URL 路由配置文件，使用更少的封装，更加直接地实现同样的事情。这个配置文件，与 Groovy 和 Cake PHP 的机制一样，反映了一个 HTTP 请求的结构 - HTTP 方法，URL 路径，还有映射关系：
+
+bc. # Play 的路由配置文件'routes'…
+ 
+# Method   URL path         Controller
+ 
+GET        /                Application.index
+GET        /about           Application.about
+POST       /item            Item.addItem
+GET        /item/{id}       Item.getItem
+GET        /item/{id}.pdf   Item.getItemPdf
+
+这个例子里，有不止一个的控制器。在最后2行配置里，我们还看到了一个名字为 id 的 URL 参数的用法。
+
+h2. <a>更好的易用性不仅适用于普通用户</a>
+
+Play 是由 Web 开发人员为 Web 开发人员创造的，从另一个角度看待这个 idea，就是考虑 Web 开发人员与 Java EE 开发人员在软件设计方法上可能会有怎样的区别。当你开发软件时，什么是最主要的接口？如果你是一名 Web 开发人员，最主要的接口是一个基于 Web 的由 HTML，CSS 和（愈来愈重要的）JavaScript 构建而成的用户界面。而另一方面，作为一个 Java EE 开发人员，则可能会认为最主要的接口是一个 Java API，或者是一个 Web Services API，它们供系统中的其他层使用。
+
+这种差异是一个大问题，因为 Java 的接口是提供给其他程序员使用的，而 Web 用户界面是提供给非程序员使用的。在这两种场景下，良好的设计包括易用性，但易用性对于普通用户和对于程序员是不一样的。在某种程度上，对于软件设计的易用性，普通用户相对程序员来说有更高的标准，因为即使软件设计的易用性很差，对程序员来说，还是可以很好的应付的。这有点像 "Good Grips"：http://www.designcouncil.org.uk/Case-Studies/All-Case-Studies/OXO-Good-Grips/ 厨具：虽然他们设计的最初目的是让患有关节炎的老人更容易使用，但事实证明，制造更加易用的工具，对所有用户都有好处。
+
+Play 框架是与众不同的，因为你要在你的 Web 应用程序中实现的易用性，已经存在框架本身里。例如，框架的文档和程序的错误信息都直接使用 Web 界面在浏览器中显示，这样更实用。与之相似地，在程序出错时，服务器控制台也避免了输出满屏幕的无关日志和堆栈跟踪信息，使 Web 开发人员能更集中注意力地关注有用的信息。
+
+!images/usability-trace!
+
+试想象一下，使用 JSF 的 Web 应用程序是怎么显示堆栈跟踪信息的。事实上，Play 想的更多：不仅仅是显示了堆栈跟踪信息，还显示了堆栈跟踪信息中出现在 Web 应用程序中的最后一行代码。毕竟，你真正想知道的是在自己的代码中第一个导致出错的地方在哪里。
+
+!images/usability-exception!
+
+这种类型的易用性不是由自身产生；Play 框架花费相当大的努力，过滤了重复和不相关的信息，并重点关注那些必不可少的事情。
+
+h2. <a>细节决定质量</a>
+
+在 Play 框架中，大部分质量体现在细节当中：他们可能是一些独立的小细节，而不是重大的特性，但这些细节合在一起，带来了更舒适和更有成效的开发体验。在你使用 Play 构建应用的时候，你会感到温暖，因为你不再体会到以往在与其它框架的战斗中常常体会到的那种沮丧。
+
+p(note). 来自 "Peter Hilton":http://hilton.org.uk/about_ph.phtml, 原文发表在 "Lunatech Research":http://www.lunatech-research.com/archives/2010/03/15/play-framework-usability 博客中.

@@ -1,0 +1,194 @@
+h1. 文档
+
+欢迎大家阅读《Play1.2RC 中文文档》。这份文档是关于Play框架的 *1.2 release版本* 的，它可能会在较大程度上不同于1.2版本之前的文档。 
+具体请参看 "version 1.2 release notes":releasenotes-1.2. 
+
+h2. <a name="started">开始</a>
+
+以下是入门 Play 的第一步，可以当作是5分钟的趣味阅读
+
+# "Play framework 概览":overview
+# "观看截屏":http://vimeo.com/7087610
+# "Play 可以做的 5 件很酷的事":5things
+# "易用性 - 细节和特性一样重要":usability
+# "常见问题":faq
+# %(next)"安装指南":install%
+# "配置你喜欢的 IDE":ide
+# "开始第一个应用 — ‘Hello World’ 入门指南":firstapp
+# "示例应用":samples
+
+
+h2. <a name="guide">教程 — Play入门指导，一步步教你创建一个实际的应用</a>
+
+通过从头到尾按照教程编写程序 **‘Yet Another Blog Engine’** 来学习Play。每一章节的练习都有机会学会Play的一两个很酷的特性。
+
+# "创建工程":guide1
+# "数据模型(Data Model)":guide2
+# "构建第一个视图":guide3
+# "评论页面":guide4
+# "创建验证码":guide5
+# "添加tag标签":guide6
+# "使用CRUD创建基本的管理后台":guide7
+# "添加权限控制":guide8
+# "创建自定义的编辑区域":guide9
+# "完成应用的测试":guide10
+# "产品化的准备":guide11
+# "国际化和本地化":guide12
+
+h2. <a name="manual">重要文档</a>
+
+涵盖所有你需要了解的Play的知识。
+
+# "主要的概念":main
+## "MVC应用模型":main#mvc
+## "一个请求的生命周期":main#request
+## "应用的布局和结构":main#application
+## "开发流程的周期":main#lifecycle
+# "HTTP路由":routes
+## "路由文件的语法":routes#syntax
+## "路由的优先级":routes#priority
+## "处理静态资源":routes#static
+## "Reverse routing: generate some URL":routes#reverse
+## "Setting content types":routes#content-types
+## "Content negotiation":routes#content-negotiation
+# "Controllers":controllers
+## "A Controller overview":controllers#overview
+## "Retrieve HTTP parameters":controllers#params
+## "Advanced HTTP to Java binding":controllers#binding
+## "Return a result":controllers#result
+## "Interceptions":controllers#interceptions
+## "Session and Flash scopes":controllers#session
+# "The template engine":templates
+## "Template syntax":templates#syntax
+## "Template inheritance":templates#inheritance
+## "Create tags":templates#tags
+## "Extending the templates language":templates#extensions
+## "Implicit objects":templates#implicits
+# "HTTP form data validation":validation
+## "How does it work?":validation#how
+## "Retrieving error messages":validation#messages
+## "Displaying errors in the template":validation#display
+## "Using annotations":validation#annotations
+## "Validating objects":validation#objects
+## "Custom validation":validation#custom
+# "The domain object model":model
+## "Properties simulation":model#properties
+## "Setup a database to persist your model objects":model#database
+## "Persist your object model with Hibernate":model#hibernate
+## "The stateless model":model#stateless
+# "JPA persistence":jpa
+## "Starting the JPA entity manager":jpa#starting
+## "Obtaining the JPA entity manager":jpa#obtaining
+## "Transaction management":jpa#transactions
+## "The play.db.jpa.Model support class":jpa#support
+## "Finding objects":jpa#finding
+## "Counting objects":jpa#counting
+## "Explicit save":jpa#save
+## "More about generic typing problems":jpa#typing
+# "Play libs":libs
+## "XML parsing using XPath":libs#ParsingXMLusingXPath
+## "Web Service client":libs#WebServiceclient
+## "Functional programming with Java":libs#FunctionalprogrammingwithJava
+## "OAuth":libs#OAuth
+## "OpenID":libs#OpenID
+# "Asynchronous Jobs":jobs
+## "Bootstrap jobs":jobs#concepts
+## "Scheduled jobs":jobs#scheduling
+## "Triggering task jobs":jobs#tasks
+# "Asynchronous programming with HTTP":asynchronous
+## "Suspending HTTP requests":asynchronous#SuspendingHTTPrequests
+## "HTTP response streaming":asynchronous#HTTPresponsestreaming
+## "Using WebSockets":asynchronous#UsingWebSockets
+# "Ajax requests":ajax
+## "Making Ajax requests with JQuery":ajax#jsaction
+# "Internationalization":i18n
+## "Only use UTF-8":i18n#utf8
+## "Externalize your messages":i18n#messages
+## "Define languages supported by the application":i18n#languages
+## "Define date format according to your locale":i18n#dates
+## "Retrieve localized messages":i18n#retrieve
+# "Cache":cache
+## "The cache API":cache#api
+## "Don’t use the Session as a cache":cache#session
+## "Configure memcached":cache#memcached
+# "Sending e-mail":emails
+## "Mail and MVC integration":emails#mvc
+## "SMTP configuration":emails#smtp
+## "More about configuration":emails#configuration
+## "Using Gmail":emails#gmail
+# "Testing the application":test
+## "Writing tests":test#writing
+## "Fixtures":test#fixtures
+## "Running the tests":test#running
+## "Continuous integration":test#continuous
+# "Security Guide":security
+## "Sessions":security#sessions
+## "Cross-Site Scripting":security#xss
+## "SQL Injection":security#sql
+## "Cross-Site Request Forgery":security#csrf
+# "Modules and the module repository":modules
+## "What is a module?":modules#what
+## "How to load a module from an application":modules#loading
+## "Load default routes from modules":modules#routes
+## "Using the module repository":modules#repository
+## "Contributing a new module to the module repository":modules#contributing
+# "Dependency management":dependency
+## "Dependency format":dependency#format
+## "dependencies.yml":dependency#yml
+## "Conflict resolution":dependency#conflicts
+## "Adding new repositories":dependency#repositories
+# "Managing your database evolutions":evolutions
+## "Evolutions scripts":evolutions#script
+## "Synchronizing concurrent changes":evolutions#Synchronizingconcurrentchanges
+## "Inconsistent states":evolutions#Inconsistentstates
+## "Evolutions commands":evolutions#Evolutionscommands
+# "Logging configuration":logs
+## "Logging from your application":logs#logging
+## "Configure log levels":logs#levels
+# "Configuration in several environments":ids
+## "The framework ID":ids#id
+## "Setting the framework ID from the command line":ids#command
+# "Production deployment":production
+## "Configure your application.conf":production#application
+## "Configure logging":production#logging
+## "Set-up a front-end HTTP server":production#server
+# "Deployment options":deployment
+## "Standalone Play application":deployment#standalone
+## "Running on JEE application servers":deployment#appservers
+## "Google Application Engine":deployment#gae
+## "Stax cloud hosting platform":deployment#stax
+
+
+h2. <a name="references">References</a>
+
+Extended references for day-to-day hacking.
+
+# "Quick index":index
+# "API documentation (Javadoc)":/@api/index.html
+# "Cheat sheets":cheatsheet/commandLine
+## "Command Line":cheatsheet/commandLine
+## "Controllers":cheatsheet/controllers
+## "Templates":cheatsheet/templates
+## "Model":cheatsheet/model
+## "Testing":cheatsheet/tests
+## "Multi-environment":cheatsheet/multiEnvironment
+# "Built-in extensions":tags
+## "Template tags":tags
+## "Java extensions":javaextensions
+## "Validations":validation-builtin
+
+h2. <a name="modules">Distribution Modules</a>
+
+These optional modules are included with the standard distribution. "More modules":http://www.playframework.org/modules.
+
+# "CRUD":crud
+# "Secure":secure
+
+h2. <a name="versionnotes">Version notes</a>
+
+New versions of Play include certain changes. Check older release notes for:
+
+# "Play 1.1":releasenotes-1.1
+# "Play 1.0.3":releasenotes-1.0.3
+# "Play 1.0.2":releasenotes-1.0.2
+# "Play 1.0.1":releasenotes-1.0.1

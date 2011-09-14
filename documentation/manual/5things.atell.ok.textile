@@ -1,0 +1,122 @@
+h1. Play 可以做的 5 件很酷的事
+
+通过 5 个实例，透视 Play 框架背后的哲学。
+
+h2. <a>绑定 HTTP 参数到 JAVA 方法参数</a>
+
+用 Play 框架，在 Java 代码中获取 HTTP 请求参数是非常简单的，只需要声明方法的参数名和 HTTP 请求的参数名一样就可以了。
+
+例如，这个请求：
+
+bc. /articles/archive?date=08/01/08&page=2
+
+把 **date** 和 **page** 声明为 Java 方法的传入参数，就可以获取 HTTP 请求中 date 和 page 参数的值了：
+
+bc. public static void archive(Date date, Integer page) {
+    List<Article> articles = Articles.fromArchive(date, page);
+    render(articles);
+}
+
+Play 框架会根据声明的 Java 参数类型，自动把 HTTP 请求参数转换成对应的 Java 对象。
+
+这种自动绑定也适用于 **任何的 Java 对象** 。
+
+bc. public class Person {
+    public String name;
+    public Integer age;
+}
+
+一个简单的用于添加用户的控制器的 action 方法可以像这样：
+
+bc. public static void add(Person p) {
+    p.save();
+}
+
+对应的 HTML 表单域使用复合的参数名：
+
+bc. <form action="/Directory/add" method="POST">
+    Name: <input type="text" name="p.name" />
+    Age: <input type="text" name="p.age" />
+</form>
+
+
+h2. <a>通过调用对应的 Java 方法进行重定向</a>
+
+Play 没有等价于 Java Servlet **forward** 命令的方法，但是实现重定向确实非常简单。只需调用相应的 Java 方法，Play 就会自动生成正确的重定向( HTTP Redirect )响应给客户端。
+
+bc. public static void show(Long id) {
+    Article article = Article.findById(id);
+    render(article);
+}
+ 
+public static void edit(Long id, String title) {
+    Article article = Article.findById(id);
+    article.title = title;
+    article.save();
+    show(id);
+}
+
+注意在 edit 方法的最后，是如何使我们重定向到 show 方法对应的页面的。
+
+在任何模板文件中，你可以利用同样的语法生成链接：
+
+bc. <a href="@{Article.show(article.id)}">${article.title}</a>
+
+将会生成以下 HTML 内容：
+
+bc. <a href="/articles/15">My new article</a>
+
+
+h2. <a>不要重复地将 Java 对象传递到模板文件</a>
+
+在大多数的 Java 框架中，为了把 Java 对象传递到模板文件，通常你需要类似这样写：
+
+bc. Article article = Article.findById(id);
+User user = User.getConnected();
+Map<String, Object> model = new HashMap<String,Object>();
+model.put("article", article);
+model.put("user", user);
+render(model);
+
+使用 Play，你只须这样写：
+
+bc. Article article = Article.findById(id);
+User user = User.getConnected();
+render(article, user);
+
+然后你就可以从模板中获取相应的 Java 变量。这样剩下了不少重复无用的代码…
+
+h2. <a>JPA 持久化</a>
+
+JPA 无疑是目前 Java 领域最佳的对象关系映射框架( ORM )。如果你熟悉 JPA，你会惊讶于它在 Play 框架中变得如此简单。不需要任何配置，Play 会自动启动 JPA 实体管理器，并在代码发生修改时自动地同步。
+
+而且如果你使用 Play 提供的 **play.db.jpa.Model** 作为超类时，它会帮助你把代码写得更漂亮。来看一下：
+
+bc. public void messages(int page) {
+    User connectedUser = User.find("byEmail", connected()).first();
+    List<Message> messages = Message.find(
+        "user = ? and read = false order by date desc",
+        connectedUser
+    ).from(page * 10).fetch(10);
+    render(connectedUser, messages);
+}
+
+h2. <a>简单易用的文件上传管理</a>
+
+在 Play 框架里文件上传管理非常简单。
+
+以下 HTML 表单：
+
+bc. #{form @uploadPhoto(), enctype:'multipart/form-data'}
+    <input type="text" name="title" />
+    <input type="file" id="photo" name="photo" />
+    <input type="submit" value="Send it..." />
+#{/}
+
+和这段 Java 代码：
+
+bc. public static void uploadPhoto(String title, File photo) {
+   ...
+}
+
+就完成了! 再简单不过了吧？

@@ -1,0 +1,115 @@
+h1. 配置你喜欢的 IDE
+
+使用 Play 进行工作是很容易的。你甚至不需要一个复杂的 IDE，因为 Play 会自动地编译和刷新你修改的源文件，所以，你可以使用简单的文本编辑器轻松地进行工作。
+
+但是，时髦的 Java IDE 提供了一些很酷且高效的特性，例如自动完成，即时编译，重构辅助和调试。Play 支持 "NetBeans":http://www.netbeans.org, "IntelliJ IDEA":http://www.jetbrains.com/idea/index.html 和 "Eclipse":http://www.eclipse.org platforms 平台。
+
+h2(#eclipse). <a>生成 Eclipse 配置文件</a>
+
+Play 提供一个生成 Eclipse 配置的命令。要将 Play 应用转化为 Ecipse 工程，可以使用 **eclipsify** 命令： 
+
+bc. # play eclipsify myApp
+
+然后，你需要使用 **File/Import/General/Existing project…** 菜单将应用导入到你的工作区中。
+
+!images/eclipse!
+
+**eclipsify** 命令生成若干个应用程序的启动器（launcher），主启动器（main launcher）只能通过 Eclipse 的 **Run As** 命令使用。可以随时通过 *Debug As* 启动一个调试会话，然后使用 *Connect JPDA launcher* ，停止调试会话并不会导致服务器终止。
+
+如果你对应用程序做了任何重要的修改，如改变 classpath，则需要使用 **eclipsify** 重新生成 Eclipse 配置文件。
+
+此外，Play 目录下带有一个 Eclipse 插件，在 **support/eclipse/** 目录下，要安装它，只需将你在该目录下找到的 JAR 文件，简单地复制到 Eclipse 安装目录的 **dropins** 文件夹下。
+
+p(note). **当你是和团队一起合作开发时，请不提交 Eclipse 配置文件!**
+
+生成的 Eclipse 配置文件包含了 Play 框架安装目录的绝对路径。这些特定于你自己的安装方式。当你和团队共同对一个应用进行开发时，每个开发人员都必须拥有一份自己私人的 Eclipse 配置文件。
+
+h2(#netbeans). <a>生成 NetBeans 配置文件</a>
+
+Play 提供一个生成 NetBeans 配置的命令。要将 Play 应用转化为 NetBeans 工程，可以使用 **netbeansify** 命令： 
+
+bc. # play netbeansify myApp
+
+然后，你就可以将应用作为 NetBeans 工程来打开了。
+
+!images/netbeans!
+
+使用标准的 *Run* 按钮启动应用程序。当应用程序启动后，你可以随时使用 *Debug* 按钮启动一个调试会话，停止调试会话并不会导致服务器终止。
+
+如果你对应用程序做了任何重要的修改，如改变 classpath，则需要使用 **netbeansify** 重新生成 Eclipse 配置文件。
+
+p(note). **当你是和团队一起合作开发时，请不提交 nbproject/ 目录！**
+
+生成的 NetBeans 配置文件包含了 Play 框架安装目录的绝对路径。这些特定于你自己的安装方式。当你和团队共同对一个应用进行开发时，每个开发人员都必须拥有一份自己私人的 NetBeans 配置文件。
+
+h2(#intellij). <a>生成 IntelliJ IDEA 配置文件</a>
+
+Play 提供一个生成 IntelliJ IDEA 配置的命令。要将 Play 应用转化为 IntelliJ IDEA 工程或模块（module），可以使用 **idealize** 命令： 
+
+bc. # play idealize myApp
+
+然后，你就可以使用导入模块的功能将应用导入 IntelliJ。
+
+!images/intellij!
+
+你可以在上下文菜单中使用 *Run* 和 *Debug* 命令。 
+
+p(note). **当你是和团队一起合作开发时，请不提交 .iml  文件！**
+
+生成的 IntelliJ IDEA 配置文件包含了 Play 框架安装目录的绝对路径。这些特定于你自己的安装方式。当你和团队共同对一个应用进行开发时，每个开发人员都必须拥有一份自己私人的 IntelliJ IDEA 配置文件。
+
+h2(#textmate). <a>Textmate</a>
+
+下载并安装 "Textmate":http://macromates.com/ 提供的软件包，可以使语法自动着色和代码自动完成。该软件包还简化了控制器和视图之间的导航。
+
+!images/editor!
+
+
+h2(#custom). <a>手动配置你喜欢的编辑器</a>
+
+因为 Play 应用是标准的 Java 应用，所以你不需要特定的插件就能直接使用你喜欢的编辑器。但是，前提是你需要掌握一点关于 Play 工作原理的知识。
+
+h3. Classpath 配置
+
+Play 应用的 classpath 是这样建立的（按顺序）：
+
+* 应用的 **conf** 目录
+* **$PLAY_PATH/framework/play-$version.jar** 文件
+* 应用的 **lib/** 目录下的所有 Jar 文件
+* **$PLAY_PATH/framework/lib/** 目录下的所有 Jar 文件
+
+p(note). *提示*
+ 
+如果你启用了任何模块，你也需要将该模块所涉及的库文件（从 **$module/lib/** 目录）添加到 classpath 。
+
+h3. 运行主类
+
+要启动一个 Play 应用，只需运行 **play.server.Server** 类。Play 使用 **"application.path"** 系统属性来定位要运行的应用程序。通常这样传递这个值：
+
+bc. java -Dapplication.path="/app/path"...
+
+h3. Java 代理
+
+为了启用 HotSwap 热加载技术，你必须加载一个打包在 **play.jar** 中的 Java 代理。通常情况下是这样的：
+
+bc. java -javaagent:"$PLAY_PATH/framework/play.jar" ...
+
+这不是必需的，但它将加快类的重新载入速度。
+
+h2. <a>调试问题</a>
+
+当 Java 源代码被修改时 Play 会自动重新加载 Java 类。然而，由于 Java 并不完全支持类的重载，JDPA 调试器会很容易令人感到困惑：断点提交可能会失败或者当调试进入代码时调试器可能会停止在错误的代码行上。
+
+为了避免这种现象，更好的办法是修改代码后启动一个新的调试会话。幸运的是，JPDA 支持随时连接和断开调试器而不需要重新启动 JVM。
+
+所以，调试的正确流程应该是：
+
+# <span>修改源代码。</span>
+# <span>刷新浏览器以查看结果。 (这时候 Play 将重新加载代码的改动，并重新在 JVM 中定义。)</span>
+# <span>如果出现错误，需要调试，则可以启动一个新的调试会话。</span>
+# <span>调试并修正你的代码。</span>
+# <span>断开调试。</span>
+
+通过遵循以上流程，可以保证调试器永远和加载在 JVM 中的代码保持同步。
+
+p(note). 下一节： %(next)"‘Hello World’ 入门指南":firstapp%.

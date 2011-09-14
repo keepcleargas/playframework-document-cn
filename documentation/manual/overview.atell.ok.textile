@@ -1,0 +1,122 @@
+h1. Play 框架概述
+
+有别于其他臃肿的企业级 Java 框架，简洁的 Play 框架提供另外一种选择，它关注于开发者的效率和 RESTful 风格的架构。Play 是 *敏捷软件开发* 的完美伴侣。
+
+Play 框架的目标是让基于 Java 的 web 应用开发变得更加容易，让我们看一下它是怎么做到的。
+
+p(note). **想不想看看代码?** 
+ 
+阅读 "你可以使用 Play 做的5件很酷的事":5things ，或者直接从 "Hello World 入门指南":firstapp 开始 。
+
+
+h2. <a name="java">没有痛苦的 Java 框架</a>
+
+Play 是一个纯 Java 的框架，它让你保持使用你喜欢的开发工具和类库。如果你已经是一个使用 Java 平台的开发者，
+那么你不需要切换到另一种语言，其他 IDE 或者其他类库， *而仅仅是切换到一个效率更高的 Java 环境！*
+
+h2. <a name="reload">修改 bug 后自动重新加载</a>
+
+Java 平台因为较低的开发效率，已经是声名狼藉了，主要的原因就是重复和繁琐的“编译-打包-部署”的周期。
+
+这就是为什么我们重新对这种开发周期进行了思考，并且通过 Play 让开发变得更有效率。
+
+Play 框架自动编译 Java 源代码，然后直接热加载到 JVM 中而不需要重启服务器。你可以编辑代码，框架自动重新加载，然后直接就看到修改后的结果，就像在 LAMP 或者 Rails 环境中一样。
+
+更有趣的是你可以根据自己的喜好，仅仅使用一个简单的文本编辑器进行开发，而不需要使用功能齐备的 Java IDE。
+
+!images/editor!
+
+当有错误发生时，框架会尽最大的努力，辨别并显示出错误信息。
+
+!images/guide1-3!
+
+Play 甚至对 Java 堆栈跟踪信息进行优化，以便帮助你更容易地解决问题。看看 Java 堆栈跟踪是如何展示模板的执行过程的。
+
+!images/stacktrace!
+
+h2. <a>简单的无状态的 MVC 架构</a>
+
+想想，你在一端有一个数据库，另一端是一个浏览器，为什么非要在两者之间存在一个状态呢？
+
+基于有状态和组件式的 Java Web 框架使我们很容易自动保存页面状态，但是这带来了很多其他问题：如果用户打开了第二个窗口时会发生什么？如果用户单击了浏览器的后退按钮呢？
+
+PHP，Ruby on Rails 和 Django 等许多 Web 应用框架促进了 "无共享(Share Nothing)":http://zef.me/883/the-share-nothing-architecture 架构的发展。随着浏览器愈来愈强大，现在很容易使用 Ajax，或者离线存储去解决客户端的状态问题。
+
+我们不再需要为了在 web 上重建一个伪造的状态而去 hack HTTP 模型。 "无共享(Share Nothing)":http://zef.me/883/the-share-nothing-architecture 的另一方面好处是，可以更加容易地并行地渲染页面的各个部分，更容易地是实现页面局部更新（渐进式增强）。
+
+
+h2. <a name="http">从 HTTP 到代码的映射</a>
+
+如果你使用过另外一种 Java Web 框架，例如 Servlet API 或者 Struts 框架，那么你已经看到了一个把 HTTP 协议和 Java API 以及一些奇怪的概念关联起来的抽象体系。Play 和它们想的不同，一个 Web 应用框架应该让你可以完全地直接地访问 HTTP 协议，这是 Play 和其他 Java Web 框架的一个根本性区别。
+
+HTTP 协议，请求/响应模式，REST 架构风格， "内容类型(content-type)协商":http://localhost:9000/zh/routes#content-negotiation ，统一资源标识符(URI) 都是 Play 框架涉及的主要概念。
+
+例如，绑定一个 URI 模式到 Java 调用只需要这样一行：
+
+bc. GET    /clients/{id}        Clients.show
+
+如果 Ajax，REST 风格和在页面之间维护前进/后退操作，是你在日常的 web 开发工作中需要面对的问题，那么请给 Play 一个机会吧。
+
+
+h2. <a name="templates">高效的模板引擎</a>
+
+我们很喜欢 JSP 和 表达式语言背后的思想，但是为什么我们需要这么多的配置文件才能创建一个标签库呢？为什么我们不能完全地访问对象模型呢？ JSP 有很多的约束，这的确令人沮丧。这就是为什么我们创建了一个自定义的模板系统，灵感来自 JSP ，但是没有它的那些约束。
+
+你，还有其他人，应该已经疲倦了写类似这样的代码：
+
+bc. <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+ 
+<c:choose>
+    <c:when test="${emails.unread != null && fn:size(emails.unread)}">
+        You have ${fn:size(emails.unread)} unread email(s)!
+    </c:when>
+    <c:otherwise>
+        You have no unread emails!
+    </c:otherwise>
+</c:choose>
+
+我们认为，你一定更喜欢这样写：
+
+bc. You have ${emails.unread ?: 'no'} ${emails.unread?.pluralize('email')} !
+
+Play 模板引擎使用的表达式语言是 "Groovy":http://groovy.codehaus.org/ ，它的语法和 Java 一致。 Play 主要使用模板引擎来渲染 HTML 内容，不过你同样可以使用它去生成其他内容，例如 email 邮件消息，JSON 等等。
+
+
+h2. <a>JPA 持久化</a>
+
+Java 持久化接口( Java Persistence API )是一个简洁的 Java 版的 ORM 框架，如果你使用过 JPA ，你会惊讶于它在 Play 框架中变得如此简单。不需要任何配置，Play 会自动启动 JPA 实体管理器，并在代码发生修改时自动地同步。
+
+而且如果你使用 Play 提供的 **play.db.jpa.Model** 作为超类时，它会帮助你把代码写得更漂亮。来看一下：
+
+bc. public void messages(int page) {
+    User connectedUser = User.find("byEmail", connected()).first();
+    List<Message> messages = Message.find(
+        "user = ? and read = false order by date desc",
+        connectedUser
+    ).from(page * 10).fetch(10);
+    render(connectedUser, messages);
+}
+
+h2. <a>测试驱动开发(如果你喜欢)</a>
+
+集成的测试可以让你更容易的去进行测试驱动开发 (Test-Driven Development) ，你可以写下各种类型的测试，从简单的单元测试到完整的 acceptance 测试，然后直接在浏览器中使用 "Selenium":http://seleniumhq.org/ 运行测试。代码覆盖率也会被考量。
+
+!images/guide2-2!
+
+h2. <a name="full-stack">全栈的应用框架</a>
+
+Play 框架的最初灵感是来自于我们自己的 Java 应用。它包含了创建一个现代 Web 应用所需要的所有工具，包含：
+* 支持 JDBC 的关系数据库
+* 基于 Hibernate ( JPA 接口 ) 的对象-关系映射框架( ORM )
+* 集成的缓存支持，易用的分布式缓存系统( memcached )
+* 简单直接的提供 JSON 和 XML 的 Web Service 服务(我们说的是 *真正* 的 Web Services，而不是 SOAP 之类)
+* 支持使用 OpenID 进行分布式的身份认证
+* 可以将 Web 应用部署到任何地方(应用服务器，GAE ，云服务，等等)
+* 图像处理 API
+
+Play 模块化的架构使你可以把你的 Web 应用和其他很多的模块组合起来。多亏了应用模块( "application modules":modules )，利用它你能够以一种非常简单的方式重用你的 Java 代码，模板，静态资源(如 JavaScript 和 CSS 文件)。
+
+p(note). **尝试一下吧**
+ 
+"安装 Play 框架":install ，然后开始开发你的第一个应用吧。

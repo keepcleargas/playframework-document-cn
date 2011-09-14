@@ -1,0 +1,311 @@
+h1. HTTP路由
+
+HTTP路由(译者注：Play的路径映射机制)组件负责将HTTP请求交给对应的action(一个控制器Controller的公共静态方法)处理。
+
+对于MVC框架来说，一个HTTP请求可以看成一个事件。这个事件包含2方面的信息：
+
+* 请求的路径(例如 /clients/1542, /photos/list)，包括查询字符串(Query String).
+* HTTP的请求方法 (GET, POST, PUT, DELETE)
+
+h2. <a name="rest">关于REST</a>
+
+Representational state transfer(简称REST)是一种分布式超媒体软件架构风格，类似互联网。
+
+REST规定了一些关键的设计原则：
+
+* 应用的功能分散在各种资源中
+* 每个资源对应一个唯一的可访问的资源标识符(URI) 
+* 所有资源在客户端和资源之间使用一个统一的接口来转移状态。
+
+如果你使用过HTTP协议，HTTP协议的方法(译者注：GET、POST、PUT和DELETE等)定义了这些接口。访问资源状态使用的协议有：
+
+* 客户－服务器
+* 无状态性
+* 缓存
+* 分层
+
+如果应用遵循了上述的REST设计原则，那么我们称该应用是RESTful的。 使用Play框架很容易构建RESTful的应用：
+
+* Play路由通过解析URI和HTTP methods，将request请求映射到对Java方法的调用。基于正则表达式的URI模式让你处理起来更加灵活。
+* 协议是无状态的，这意味着你不能在服务端保存2次成功请求之间的任何状态。
+* Play认为HTTP是关键的特性，因此Play让你可以毫无保留地访问HTTP的所有信息。
+
+h2. <a name="syntax">路由文件的语法</a>
+
+**conf/routes** 文件用于配置路由规则。这个文件包含了应用的所有路径映射。每一个路由配置项由HTTP方法，URI模式和对应的Java调用组成。
+
+我们看看，一个路由配置项是这样子的：
+
+bc. GET    /clients/{id}             Clients.show           
+
+每一个路由配置项以一个HTTP方法开始，后面跟着URI模式，最后是Java调用的声明。
+
+你可以给路由文件增加注释，以 **#** 开头。
+
+bc. # Display a client
+GET    /clients/{id}             Clients.show           
+
+h3. HTTP方法
+
+HTTP方法可以是任何HTTP所支持的有效的方法：
+
+* **GET**
+* **POST**
+* **PUT**
+* **DELETE**
+* **HEAD**
+
+此外它支持使用 **WS** 作为action方法，表示一个 "WebSocket":asynchronous#UsingWebSockets 请求。
+
+如果使用 * 作为方法，则这个路由项将和任何HTTP请求方法相匹配。
+
+bc. *   /clients/{id}             Clients.show           
+
+这个路由项将匹配以下两者(译者注：当然也匹配所有其他的HTTP方法)：
+
+bc. GET /clients/1541
+PUT /clients/1212
+
+
+h3. URI模式
+
+URI模式定义了请求的路径。请求的路径可以定义动态URI，动态URI的部分必须包含在 {…} 中。
+
+bc. /clients/all
+
+将完全匹配：
+
+bc. /clients/all
+
+但是…
+
+bc. /clients/{id}
+
+将同时匹配以下两者：
+
+bc. /clients/12121
+/clients/toto
+
+一个URI模式可以包含一个以上的动态部分：
+
+bc. /clients/{id}/accounts/{accountId}
+
+动态部分的默认匹配策略是由正则表达式 **/[^/]+/** 来定义的，你也可以为动态部分定义你自己的匹配正则表达式。
+
+下面这个正则表达式只能接受id为数字的URI请求：
+
+bc. /clients/{<[0-9]+>id}
+
+下面这个则只接受id是一个包含4位到10位小写字母的URI请求：
+
+bc. /clients/{<[a-z]{4,10}>id}
+
+总之任何合法的正则表达式都可以在这里使用。
+
+p(note). **注意**
+ 
+动态部分在此处是有命名的(译者注：如上述例子中动态部分命名为id)。稍候Controller控制器可以通过HTTP参数对象(Map)获取此处的动态部分的值(译者注：即获取id的实际值)。
+
+Play认为斜杠 */* 是很重要的，不可忽略。例如，看看下面这个路由项：
+
+bc. GET     /clients         Clients.index
+
+它将会匹配 */clients* 但是不会匹配 */clients/* 。你可以通过在斜杠 */* 后加上一个问号 *?* ，让这个路由项匹配到URI尾部含有斜杠 */* 或者没有斜杠 */* 的两种情况，例如
+
+bc. GET     /clients/?       Clients.index
+
+p(note).  上述URI模式的尾部斜杠后面加上一个问号表示尾部斜杠是 *可选的*，除此以外，URI模式 *不能* 有任何其他的可选部分。
+
+h3. 声明Java调用
+
+路由配置项的最后一部分是Java调用的声明，这部分是由一个action方法的全称来定义的，并且这个action方法必须是一个控制器Controller类中的 **public static void** 的方法，Controller类必须定义在 **controllers** 包下，而且必须作为 **play.mvc.Controller** 的子类。
+
+你可以在 **controllers** 包下增加自定义的包名，那样的话你在此处的声明就需要在Controller类名前加上自定义的包名。 **controllers** 包本身是固定的，所以在路由项的action声明中不需要写出来。
+
+bc. GET    /admin             admin.Dashboard.index           
+
+h3. 指派静态的参数
+
+在某些情况下，你想重用一个已声明的action，但是想定义一个特殊的路由项，这个路由项具有一些特殊的参数值。
+
+让我们在下面例子中看一下怎么做：
+
+bc. public static void page(String id) {
+    Page page = Page.findById(id);
+    render(page);
+}
+
+对应的路由项是：
+
+bc. GET    /pages/{id}        Application.page
+
+现在，我想为id为‘home’的页面（即/pages/home）指定一个URL别名，我可以使用静态参数定义另外一个路由项：
+
+bc. GET    /home              Application.page(id:'home')
+GET    /pages/{id}        Application.page
+
+当page id为‘home’时，上面的两个路由项是等价的。但是，由于第一个路由项的优先级比第二个路由项高，所以当page ID为‘home’时，请求将匹配到第一个路由项。
+
+h3. 变量和脚本
+
+你可以在 **routes** 文件中用 **${ … }** 的语法来使用变量，也可以用 **%{ … }** 的语法来使用脚本，就像在模板templates文件里使用一样。例如：
+
+bc. %{ context = play.configuration.getProperty('context', '') }%
+ 
+# Home page
+GET    ${context}         Secure.login
+GET    ${context}/        Secure.login
+
+另一个例子可以看CRUD模块的 **routes** 文件，它使用 **crud.types** 标签循环遍历所有model类型，为每一个model类型生成一个controller的路由项。
+
+h2. <a name="priority">路由的优先级</a>
+
+很多路由项可以匹配相同的URL请求，如果有冲突的话，将按照在route文件中声明的顺序，匹配最前面的路由项。
+
+例如：
+
+bc. GET    /clients/all       Clients.listAll
+GET    /clients/{id}      Clients.show
+
+对于这样的定义，下面的URI请求：
+
+bc. /clients/all
+
+将被第一个路由项拦截，并调用 Clients.listAll（尽管第二个路由项也匹配该请求）。
+
+h2. <a name="static">处理静态资源</a>
+
+使用 **staticDir** 作为特殊的action方法，可以将指定的文件目录公开为静态资源文件的容器。 
+
+例如：
+
+bc. GET    /public/           staticDir:public
+
+当请求路径与 /public/* 匹配时，Play会从 /pubic 文件夹目录中取得静态资源文件。
+路由优先权也适用于这种静态资源的路由项。
+
+h2. <a name="reverse">反向路由：生成URL</a>
+
+在Java代码中可以使用Router生成URL，所以你可以将所有URI匹配模式集中地配置在唯一的一个配置文件中，然后充满信心地重构你的应用。
+例如，下面的这个路由配置：
+
+bc. GET    /clients/{id}      Clients.show
+
+在你的代码中，可以根据Clients.show生成对应的URL：
+
+bc. map.put("id", 1541);
+String url = Router.reverse("Clients.show", map).url;  // GET /clients/1541
+
+p(note). 由action方法反向生成URL的这个功能被集成在Play框架的很多组件中，你永远不需要直接调用 Router.reverse 这个方法。
+
+如果增加的参数不包含在URI匹配模式中，这些参数会被附加到请求参数(Query String)的后面。
+
+bc. map.put("id", 1541);
+map.put("display", "full");
+String url = Router.reverse("Clients.show", map).url; // GET /clients/1541?display=full
+
+路由对象Router会按照优先级的顺序找到最符合条件的路由匹配规则去生成URL。
+
+h2. <a name="content-types">设置 Content Types</a>
+
+Play根据 **request.format** 的值来决定HTTP响应的媒体类型 "media type":http://en.wikipedia.org/wiki/Internet_media_type 。通过匹配文件后缀名， **request.format** 的值可以决定要使用的模板文件 template。Play 还会从 **mime-types.properties** 文件的映射关系中，根据媒体类型 media type 对应的 **Content-type** ，来决定HTTP响应的内容类型。 
+
+Play默认的响应格式是 **html** ，因此控制器方法 **index()** 默认渲染的模板文件将是 **index.html** 文件。通过各种方式，你可以指定一个不同的格式，这样就可以自定义替代的模板。
+
+在调用 **render** 方法之前，你可以使用编程的方式设置响应的格式。例如，为了提供一个媒体类型 media type 为 **text/css** 的层叠样式表，你可以这样做：
+
+bc. request.format = "css";  
+
+但是，更清晰的方式是在 **routes** 文件中使用URL来指定格式。你可以在路由项中，给控制器的方法添加格式的声明，以此来设置响应类型。例如，下面的路由项将处理 **/index.xml** 的请求，设置 **xml** 的响应格式并且渲染 **index.xml** 模板文件。
+
+bc. GET    /index.xml         Application.index(format:'xml')  
+
+类似地：
+
+bc. GET    /stylesheets/dynamic_css   css.SiteCSS(format:'css')
+
+对于像下面这样的路由项，Play也可以直接从请求URL中解析出格式。
+
+bc. GET    /index.{format}    Application.index 
+
+对于这个路由项， **/index.xml** 的请求将使用 **xml** 的格式并且渲染 XML 的模板文件， **/index.txt** 的请求将使用 **txt** 的格式并且渲染简单文本（plain text）的模板文件。
+
+Play也可以根据HTTP内容协商（content negotiation）自动选择响应的格式。
+
+h2. <a name="content-negotiation">HTTP内容协商</a>
+
+Play 与其他 RESTful 架构的一个共同点是，直接使用 HTTP 的功能，而不是尝试隐藏 HTTP 或者在 HTTP 之上添加抽象层。内容协商（"Content negotiation":http://en.wikipedia.org/wiki/Content_negotiation ）是这样的一个 HTTP 特性，它允许 HTTP 服务器根据不同的 HTTP 客户端请求的媒体类型（media types），对同一个 URL ，响应不同的媒体类型（ "media types":http://en.wikipedia.org/wiki/Internet_media_type ）。HTTP 客户端在 **Accept** 请求头部中设置媒体类型（media types），来指定接受的内容类型（content types）。例如这样的请求表示希望得到一个 XML 的响应：
+
+bc. Accept: application/xml
+
+客户端可以指定一个以上的媒体类型（media type），也可以使用星号通配符（ ***/*** ）表示可以接受任何的媒体类型（media type）：
+
+bc. Accept: application/xml, image/png, */*
+
+传统的 web 浏览器大多数在 **Accept** 头部中包含通配符 ***/*** ：它们将接受任何的媒体类型（media type），而 Play 会响应默认的 HTML 内容类型。内容协商（content negotiation）更常用于自定义的客户端，例如一个期望得到 JSON 响应的 Ajax 请求，或者一个期望得到 PDF 或 EPUB 格式的文件的电子阅读器。
+
+h3. 在HTTP头部中设置Content Type 
+
+如果请求的 **Accept** 头部中含有 **text/html**, **application/xhtml** 或 通配符 ***/*** ，Play 将使用默认的格式 **html** 。但如果没有通配符 ***/*** ，Play 将不会使用默认的格式。
+
+Play内置了几种支持的格式： **html**, **txt**, **json** and **xml**。例如，定义一个控制器方法，渲染一些数据：
+
+bc. public static void index() { 
+   final String name = "Peter Hilton"; 
+   final String organisation = "Lunatech Research"; 
+   final String url = "http://www.lunatech-research.com/"; 
+   render(name, organisation, url); 
+} 
+
+如果浏览器发送的一个请求 URL 匹配了这个方法（例如使用 **http://localhost:9000/**访问新创建的Play应用），那么 Play 将渲染 **index.html** 模板文件，因为浏览器请求的 **Accept** 头部值含有 **text/html**。 
+
+对于含有 **Accept: text/xml** 头部的请求，Play会把响应格式设置为 **xml** ，且渲染 **index.xml** 模板文件，例如： 
+
+bc. <?xml version="1.0"?> 
+<contact> 
+<name>${name}</name> 
+<organisation>${organisation}</organisation> 
+<url>${url}</url> 
+</contact> 
+
+以控制器的 **index()** 方法为例，Play 内置的 **Accept** 头部类型映射的工作原理如下：Play将 accept 请求头部包含的媒体类型(media type)映射到一种格式(format)，从而决定渲染的模板文件。
+
+|_. Accept 头部 |_. 格式(Format) |_. 模板文件名 |_. 映射关系 | 
+| null | null | index.html | 格式为null映射到默认的模板文件 | 
+| image/png | null | index.html | 媒体类型的文件不通过格式来映射(译者注：通过静态资源目录来访问) | 
+| ==*/*==, image/png | html | index.html | 格式为html时映射到默认的媒体类型 | 
+| text/html | html | index.html | 内置的格式 | 
+| application/xhtml | html | index.html | 内置的格式 | 
+| text/xml | xml | index.xml | 内置的格式 | 
+| application/xml | xml | index.xml | 内置的格式 | 
+| text/plain | txt | index.txt | 内置的格式 | 
+| text/javascript | json | index.json | 内置的格式 | 
+| application/json, ==*/*== | json | index.json | 内置的格式, 忽略默认的媒体类型 | 
+
+
+h3. 自定义格式 
+
+通过检查请求的头部，并且相应地设置格式( format )，你可以自定义格式的类型。你只能设置与 HTTP 请求接受的媒体类型一致的格式。例如，在控制器中所有的请求处理之前，你可以设置自定义的格式，然后响应一个 **text/x-vcard** 媒体类型的 "vCard":http://en.wikipedia.org/wiki/Vcard ：
+
+bc. @Before 
+static void setFormat() { 
+	if (request.headers.get("accept").value().equals("text/x-vcard")) { 
+		request.format = "vcf"; 
+	} 
+} 
+
+现在，对于一个带有 **Accept: text/x-vcard** 头部的请求，Play 将渲染一个 **index.vcf** 模板文件，例如：
+
+bc. BEGIN:VCARD 
+VERSION:3.0 
+N:${name} 
+FN:${name} 
+ORG:${organisation} 
+URL:${url} 
+END:VCARD  
+
+
+p(note). **继续讨论**
+ 
+当路由（Router）决定对到达的 HTTP 请求执行哪一个 Java 调用之后，Play 框架将调用相应的控制器（Controller）。让我们看看 %(next)"Controllers":controllers% 是如何工作的。
+

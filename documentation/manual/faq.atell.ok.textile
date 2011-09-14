@@ -1,0 +1,53 @@
+h1. 常见问题
+
+h2. <a>在这里没有涉及到的问题，应该在哪里提问？</a>
+
+这个 "社区":http://www.playframework.org/community 页面可以链接到各个可以让你查看和发表关于 Play 的问题的地方。一般情况下，提问题的最佳地方是 "play-framework Google Group":http://groups.google.com/group/play-framework 。
+
+h2. <a>如何看待 Play 与其他框架的区别？</a>
+
+如今，在 Web 应用开发方面，你有非常多的选择。Play 作为其中一种 Java Web 应用开发框架，让我们将它和其他 Java 框架比较一下。Play 被实现为“无共享”的架构(也可以认为是无状态框架)，所以它与其他有状态和基于组件的框架(如 Seam，Tapestry 或 Wicket 等)很不同。它比较接近 Spring MVC 和 Struts(或 Struts2)，但是比它们更加自负。
+
+但是 Play 是一个独一无二的 Java 框架，它并不真正依赖所谓的 Java 企业标准。它使用的是 Java 语言，但是它试图把其他基于脚本语言的框架如 Ruby On Rails, Django, Pylons, Symfony, Grails 和 Cake PHP 中好的想法带到 Java 世界中。我们是真正地想从 Java 平台中挖掘出最好的东西，而不是像传统的 Java Web 开发那样令人叫苦连连：漫长的开发周期，太多的抽象，太多的配置文件。
+
+h2. <a>你们为什么不把 “play” 包命名为“org.playframework”?!</a>
+
+你误解了。Play 不是让你用来添加到 Servlet 容器中的又一个类库，它是一个可以独立运行你的应用的全栈式 Java 框架。Java 的包命名机制是为了在你使用不同的类库时防止命名冲突。但是相信我们，你永远不需要把 **play.jar** 库文件放到你自己的项目中。那不是 Play 的工作方式，Play **是一个平台**，不要为这担心。
+
+h2. <a>为什么要我用 Python (我更喜欢 Maven )？</a>
+
+我们需要很多的脚本以管理 Play 应用，创建一个新应用，运行它，打开浏览器等等，当然我们可以直接用 Java 做这些事情。但是启动 Java 虚拟机去完成像创建项目这样简单的任务实在太慢了，而且 Java 本身同操作系统交互时有很多的限制。
+
+Python 允许我们写出完全可移植的脚本，它运行速度很快，很容易编写，可以在大多数的系统上运行。Windows 上没有内置的 Python，所以我们在框架中内置了一个 Windows 版的 Python 二进制发布包。
+
+h2. <a>Play 是一个 Groovy 框架吗？</a>
+
+不是。虽然我们使用 Groovy 作为 Play 模板引擎的底层技术，但这对用户是完全透明的。而且，在应用的其它任何部分（例如控制器，模型或其它实体）你都不能直接使用 Groovy 语言。如果你在寻找一个基于 Groovy 的框架，你应该看一看 Grails。
+
+h2. <a>你们这帮家伙甚至不知道怎么用 Java 编程...</a>
+
+我们充分认识到我们在 Java 世界中做了相当不寻常的选择，而且 Play 不盲目地追随那些所谓的 Java “最佳实践”。但是 Play 团队所有的成员都是非常有经验的 Java 开发者，而且我们完全明白我们所做的选择和打破的规则。
+
+Java 本身是一个非常通用的编程语言，而且不是原生为 Web 应用开发所设计的。写一个通用的和可重用的 Java 类库，与创建一个 Web 应用，两者是非常不同的。Web 应用本身不需要设计成可重用的。你需要更少的抽象，更少的配置。可重用性的确存在于 Web 应用中，但它应该通过 Web Service APIs 体现，而不是将可重用性与语言集成在一起。
+
+当开发时间趋近于零时，你可以把重心放到应用的功能上，然后快速地实验，而不是努力去把功能开发抽象化。
+
+h2. <a>Play 速度快吗？</a>
+
+是的，Play 本身很快。但这并不意味着任何特定的应用都会很快。内嵌的 HTTP 服务器，基础的路由机制和控制器调用栈都非常非常快。使用现代的 JVM 和即时编译技术你可以很容易处理每秒钟上千次的请求。不幸的是，你的应用很可能会使用数据库，这通常会成为应用的瓶颈。
+
+目前在 Play 的堆栈中最占内存的是基于 Groovy 的模板引擎，但是因为使用 Play 的应用可以很容易的扩展，所以它并不是一个真正的问题，如果你需要处理很高的并发量：可以在多个服务器间使用负载均衡。我们也希望能够在新版 JDK7 中得到性能提升，因为它对动态语言有更好的支持。
+
+h2. <a>我已经可以把 Play 用于生产环境了吗？</a>
+
+当然可以，已经有 "很多人":http://www.playframework.org/community/testimonials 把 Play 用于生产环境中了。现在的 1.0 分支是一个维护分支，意味着我们对这个分支将只是做 Bugs 修复和保持 API 兼容。
+
+h2. <a>其他的类库 Play 支持吗？</a>
+
+Play 使用的是标准的 Java，所以任何标准的 Java 类库都可以很容易地使用。但是一定要谨记 Play 没有使用 Servlet API（虽然你可以使用 Play 的 WAR 包导出功能，然后让它在标准的 Servlet 容器中工作）。所以，除非你需要的类库依赖了 Servlet API，否则它不会有任何问题。
+
+h2. <a>怎样才能帮助或者参与贡献？</a>
+
+我们使用 "GitHub":http://github.com/playframework/play 作为我们主要的开发工具，GitHub 本身是非常开放的，你只需要注册一个 GitHub 的账号并创建代码分支，然后就可以参与贡献了。详细请看 "contributor guide":http://play.lighthouseapp.com/projects/57987/contributor-guide 。
+
+Play 文档在框架的源码库中以 "Textile":http://en.wikipedia.org/wiki/Textile_(markup_language%29 文件格式存在，所以你可以像对待代码一样编辑和贡献他们。
