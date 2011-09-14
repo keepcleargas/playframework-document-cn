@@ -1,10 +1,10 @@
 h1. Play中如何Ajax
 
-Play在内部使用了 "jQuery":http://jquery.com 这个JavaScript库，可以让我们非常方便的进行Ajax操作。为了能够在JavaScript中方便地生成某个action对应的Url，Play还提供了一个 @jsAction@ 标签，简化操作。
+Play在内部使用了 "jQuery":http://jquery.com 这个JavaScript库，让我们能够非常方便的进行Ajax操作。同时，为了能在JavaScript中方便地生成某个action对应的Url，Play还提供了一个 @jsAction@ 标签，简化操作。
 
 h2. <a name="jsaction">配合jQuery使用jsAction标签</a>
 
-在play的页面中，我们想取得某action对应的url，通常不会手动拼出来，而是像Java中那样写成一个函数调用，由Play解析并生成。这么做的好处是，可以让Play检查我们的调用有没有错误，不会产生错误的URL。
+在play的页面中，如果我们想取得某action对应的url，通常不会直接写出一个url，而是像Java那样写成一个函数调用，由Play解析并生成。这么做的好处是，可以让Play检查我们的调用有没有错，不会产生错误的URL。
 
 举例说明，我们在routes文件中，定义了以下的一个route：
 
@@ -34,7 +34,7 @@ bc. <script type="text/javascript">
    )
 </script>
 
-在本例中，我们使用了 @jsAction@。这一行代码：
+在本例中，我们使用了 @jsAction@ 。其中这一行代码：
 
 bc. var listAction = #{jsAction @list(':search', ':size', ':page') /}
 
@@ -49,6 +49,8 @@ bc. var listAction = function(options) {
 可以看到，它的原理非常简单：构造一个url，里面有一些占位符，将会被替换为真实的数据。
 
 所以后面的 @listAction({search: 'x', size: '10', page: '1'})@ 调用listAction后，将返回一个正确的Url: @/hotels/list?page=10&search=x&size=1@
+
+如果我们不使用 @listAction@ 标签，也得自己写一个类似的函数。
 
 另外， @.load()@ 函数是由jQuery提供的，它将发起一个Ajax GET请求，请求地址为它的第一个参数。第二个参数是一个函数，将在成功收到回复后被调用。
 
