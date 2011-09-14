@@ -58,7 +58,7 @@ bc. var listAction = function(options) {
 
 bc. GET /hotels/list?search=x&size=10&page=1
 
-返回值将会是一些HTML代码，这些代码将会替换掉 @#content@ 中的内容。
+返回值将会是一些HTML代码，这些代码将会替换掉 @#result@ 中的内容。
 
 除了HTML，jQuery还可以处理JSON或XML类型的返回值。我们只需要在对应的controller中，使用不同的render方法即可（如renderJSON, renderXML, 或者直接使用render去处理一个XML模板）。
 
