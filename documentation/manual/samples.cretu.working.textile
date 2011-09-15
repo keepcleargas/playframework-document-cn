@@ -1,7 +1,8 @@
 ﻿h1. 示例应用
 
 Play comes with the following set of sample applications in the @samples-and-test/@ directory, in the framework installation path. We use them to run our automated test suite, and you can take a look at them to discover typical Play usages.
-Play安装路径中的@samples-and-test/@目录下自带了一系列示例应用。不仅可以用来进行自动测试，也可通过参考其源代码来加深对Play的理解和应用。
+Play安装路径中的@samples-and-test/@目录下自带了一系列示例应用。不仅可以用来进行自动测试，也可通过参考其源代码来加深对Play的理解和应用
+
 h2. <a>Yet Another Blog Engine</a>
 
 The final application from the "Play guide":guide1 tutorial.
