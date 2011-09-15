@@ -1,10 +1,10 @@
-﻿h1. 示例应用
+﻿h1.  示例应用
 
-Play安装路径中的@samples-and-test/@目录下自带了一系列示例应用。不仅可以用来进行自动测试，也可通过参考其源代码来加深对Play的理解和应用
+Play安装路径中的 @samples-and-test/@ 目录下自带了一系列示例应用。不仅可以用来进行自动测试，也可通过参考其源代码来加深对Play的理解和应用
 
 h2. <a>Yet Another Blog Engine</a>
 
-该示例为"Play开发手册"中的完整示例应用
+该示例为 "Play开发手册":guide1 中的完整示例应用
 
 !images/yabe!
 
@@ -15,7 +15,7 @@ h2. <a>Zencontact</a>
 
 h2. <a>Booking</a>
 
-众所周知JBoss seam框架的"booking"应用的Play实现
+JBoss seam框架众所周知的"booking"应用之Play实现
 
 !images/booking!
 
@@ -26,7 +26,7 @@ h2. <a>Forum</a>
 
 h2. <a>Jobboard</a>
 
-使用CRUD模块自动生成后台管理页面的全功能招聘类应用
+使用CRUD模块自动生成后台管理页面的招聘类应用
 !images/jobboard!
 
 h2. <a>Chat</a>
