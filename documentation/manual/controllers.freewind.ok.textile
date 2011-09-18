@@ -334,7 +334,7 @@ h3. <a name="typebinder">play.data.binding.TypeBinder</a>
 *@As* 注解同样允许我们自定义一个完整的binder. 一个自定义的binder是 @TypeBinder@ 的子类，我们可以在自己的项目中定义它。例如：
 
 bc. public class MyCustomStringBinder implements TypeBinder<String> {
- 
+
     public Object bind(String name, Annotation[] anns, String value, 
     Class clazz) {
         return "!!" + value + "!!";
@@ -354,7 +354,7 @@ h3. <a name="global">@play.data.binding.Global</a>
 
 bc. @Global
 public class PointBinder implements TypeBinder<Point> {
- 
+
     public Object bind(String name, Annotation[] anns, String value, 
     Class class) {
         String[] values = value.split(",");
@@ -423,7 +423,7 @@ h3. <a name="template">执行一个模板</a>
 如果需要产生的内容很复杂，我们通常会在模板中来创建内容：
 
 bc. public class Clients extends Controller {
- 
+
     public static void index() {
         render();    
     }
@@ -438,7 +438,7 @@ h4. 把数据加入到模板域中
 模板通常都需要数据。我们可以把这些数据放在 @renderArgs@ 对象中:
 
 bc. public class Clients extends Controller {
- 
+
     public static void show(Long id) {
         Client client = Client.findById(id);
         renderArgs.put("client", client);
@@ -503,12 +503,12 @@ h3. <a name="chaining">Action链</a>
 举例:
 
 bc. public class Clients extends Controller {
- 
+
     public static void show(Long id) {
         Client client = Client.findById(id);
         render(client);
     }
- 
+
     public static void create(String name) {
         Client client = new Client(name);
         client.save();
@@ -563,12 +563,12 @@ h3. <a name="before">@Before</a>
 所以可以进行一下安全检查:
 
 bc. public class Admin extends Application {
- 
+
     @Before
     static void checkAuthentification() {
         if(session.get("user") == null) login();
     }
- 
+
     public static void index() {
         List<User> users = User.findAll();
         render(users);
@@ -579,24 +579,24 @@ bc. public class Admin extends Application {
 如果你想给某些方法开绿灯，可按下面的方法排除一些action：
 
 bc. public class Admin extends Application {
- 
+
     @Before(unless="login")
     static void checkAuthentification() {
         if(session.get("user") == null) login();
     }
- 
+
     public static void index() {
         List<User> users = User.findAll();
         render(users);
     }
- 
+
     …
 }
 
 或者仅对于某些方法调用该拦截器，可使用"only"：
 
 bc. public class Admin extends Application {
- 
+
     @Before(only={"login","logout"})
     static void doSomething() {  
         …  
@@ -611,17 +611,17 @@ h3. <a name="after">@After</a>
 使用<code>@After</code>注解的方法，将在该Controller中的每一个action之后被调用。
 
 bc. public class Admin extends Application {
- 
+
     @After
     static void log() {
         Logger.info("Action executed ...");
     }
- 
+
     public static void index() {
         List<User> users = User.findAll();
         render(users);
     }
- 
+
     …
 }
 
@@ -630,12 +630,12 @@ h3. <a name="catch">@Catch</a>
 使用了<code>@Catch</code>注解的方法，将会在某个抛出了它所指定的异常时，被调用。异常类型将被传入到@Catch方法的参数中。
 
 bc. public class Admin extends Application {
-	
+
     @Catch(IllegalStateException.class)
     public static void logIllegalState(Throwable throwable) {
         Logger.error("Illegal state %s…", throwable);
     }
-    
+
     public static void index() {
         List<User> users = User.findAll();
         if (users.size() == 0) {
@@ -648,18 +648,18 @@ bc. public class Admin extends Application {
 与Java的异常处理一样，我们可以使用一个超类来捕获更多的异常类型。如果我们有多个catch方法，可以通过指定其 **priority** 来定义它们的执行顺序（priority为1的最先执行）。
 
 bc. public class Admin extends Application {
- 
+
     @Catch(value = Throwable.class, priority = 1)
     public static void logThrowable(Throwable throwable) {
         // Custom error logging…
         Logger.error("EXCEPTION %s", throwable);
     }
- 
+
     @Catch(value = IllegalStateException.class, priority = 2)
     public static void logIllegalState(Throwable throwable) {
         Logger.error("Illegal state %s…", throwable);
     }
- 
+
     public static void index() {
         List<User> users = User.findAll();
         if(users.size() == 0) {
@@ -675,12 +675,12 @@ h3. <a name="finally">@Finally</a>
 使用<code>@Finally</code>注解的方法，总是在该Controller中每一个action执行完之后再执行。不论action执行成功或者失败，它都将会被执行。跟Java中finally的意思相同。
 
 bc. public class Admin extends Application {
- 
+
     @Finally
     static void log() {
         Logger.info("Response contains : " + response.out);
     }
- 
+
     public static void index() {
         List<User> users = User.findAll();
         render(users);
@@ -691,7 +691,7 @@ bc. public class Admin extends Application {
 如果@Finally方法有一个Throwable类型的参数，则异常对象会被传入（如果有的话）：
 
 bc. public class Admin extends Application {
- 
+
     @Finally
     static void log(Throwable e) {
         if( e == null ){
@@ -700,7 +700,7 @@ bc. public class Admin extends Application {
             Logger.info("action call failed", e);
         }
     }
- 
+
     public static void index() {
         List<User> users = User.findAll();
         render(users);
@@ -720,7 +720,7 @@ h3. <a name="with">通过@With注解，加入更多的拦截器</a>
 举例:
 
 bc. public class Secure extends Controller {
-    
+
     @Before
     static void checkAuthenticated() {
         if(!session.containsKey("user")) {
@@ -733,7 +733,7 @@ bc. public class Secure extends Controller {
 
 bc. @With(Secure.class)
 public class Admin extends Application {
-    
+
     …
 }
 
