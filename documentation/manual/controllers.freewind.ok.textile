@@ -1,0 +1,766 @@
+h1. 控制器层（Controllers）
+
+业务逻辑代码通常位于模型(model)层。客户端（比如浏览器）无法直接调用其中的代码，所以模型对象提供的功能，必须作为资源以URI方式暴露给外部。
+
+客户端使用HTTP协议来操作这些资源，从而调用了内部的业务逻辑。但是，这种从资源到模型之间的映射是单向的：我们可以根据需要提供不同粒度的资源，可以虚拟出一些资源，还可以给某些资源起别名...
+
+Controller层就是专门做这件事的：在模型层与传输层之间搭起一座桥梁。它使用与模型层同一种语言，以便访问和修改模型对象，但同时它又跟HTTP接口一样，是面向请求(Request)和响应(Response)的。
+
+Controller层减少了HTTP与模型层之间的“阻抗不匹配”。
+
+p(note). **注意**
+ 
+不同的模型方案使用了不同的策略。有一些可以让我们直接访问模型对象，比如EJB或者Corba协议，它们使用RPC(远程过程调用）。这种交互方式与web很难兼容。
+
+另一些技术如SOAP，尝试通过Web来访问模型层，但它也是一种PRC风格的协议，只是以HTTP为传输协议。它也不是一种程序协议。
+
+Web的理念在根本上与面向对象不同，所以我们需要一个层来协调。
+
+h2. <a name="overview">Controller综述</a>
+
+一个Controller就是一个位于 @controllers@ 包中的类，其继承于 @play.mvc.Controller@ ：
+
+示例：
+
+bc. package controllers;
+ 
+import models.Client;
+import play.mvc.Controller;
+ 
+public class Clients extends Controller {
+ 
+    public static void show(Long id) {
+        Client client = Client.findById(id);
+        render(client);
+    }
+ 
+    public static void delete(Long id) {
+        Client client = Client.findById(id);
+        client.delete();
+    }
+ 
+}
+
+Controller中每一个public static方法都被称为一个action。它的签名形如：
+
+bc. public static void action_name(params...);
+
+你可以在action的方法签名中定义各种参数。Play会自动从相应的HTTP参数中，取出对应的值赋过去（并进行恰当的转换），这一点非常方便。
+
+通常一个action不需要返回值。当我们在action中调用了一个能产生“结果”的方法后，action就退出了。在本例中， @render(…)@ 就是一个显示一个模板的可产生结果的方法。 
+
+h2. <a name="params">获取HTTP参数</a>
+
+HTTP请求中可包含数据，这些数据可位于：
+
+* URI路径中: 如 @/clients/1541@, 1541就是一个动态产生的参数.
+* Query String: @/clients?id=1541@.
+* request body: 如果提交了一个HTML表彰，将request body中将包含以 @x-www-urlform-encoded@ 方式转换过的数据。
+
+对于这些情况，Play都可以取得数据，并生成一个 @Map<String, String[]>@ 。Key是参数名，来源于：
+
+* 在conf/routes文件中定义的规则中的动态参数名
+* Query String中的name=value
+* 通过表单提交的数据的name.
+
+h3. <a name="paramsmap">使用参数map</a>
+
+在所有的Controller类中都可以直接使用 @params@ 这个对象。它是在 @play.mvc.Controller@ 中定义的。这个对象中，包含了当前请求的所有数据。
+
+示例:
+
+bc. public static void show() {
+    String id = params.get("id");
+    String[] names = params.getAll("names");
+}
+
+你还可以转换参数值的类型：
+
+bc. public static void show() {
+    Long id = params.get("id", Long.class);
+}
+
+其实，还有更好的办法来转换 :)
+
+h3. <a name="methodsignature">直接利用action方法的参数类型定义来转换</a>
+
+我们可以直接从action方法的参数定义中，直接拿到对应的参数值。方法中的参数名必须跟http传过来的参数名相同。
+
+比如，对于如下的URL:
+
+bc. /clients?id=1451
+
+我们可以定义一个包含 @id@ 参数的action：
+
+bc. public static void show(String id) {
+    System.out.println(id); 
+}
+
+我们还可以使用其它的类型，play会自动进行转换：
+
+bc. public static void show(Long id) {
+    System.out.println(id);  
+}
+
+如果同一个参数有多个值，还可以把它声明为数组：
+
+bc. public static void show(Long[] id) {
+    for(String anId : id) {
+        System.out.println(anid); 
+    }
+}
+
+甚至集合：
+
+bc. public static void show(List<Long> id) {
+    for(String anId : id) {
+        System.out.println(anid); 
+    }
+}
+
+这一功能非常方便，其它的框架都很少提供（有一些提供了，但要求每个参数前都要加一个annotation，不太方便）。
+
+内部原理是，Play会对每个action进行扫描，得到其参数信息（包括类型与参数名）。能过反射很容易得到参数类型，但得不到参数名，因为javac在编译java代码时，会忽略参数名信息。而Play内置了eclipse的编译器，并在编译时打开相关选项以记录参数名信息，所以才能成功取到。
+
+p(note). **异常**
+
+如果action方法中定义的某个参数，在http请求中找不到对应的数据，则将会把它设为默认值（对象类型设为null，基础数字类型设为0，boolean类型设为false）。如果找到了，但是其值无法转换为指定的Java类型，则会将这一错误记录在validation对象中，并使用默认值代替。
+
+h2. <a name="binding">HTTP to Java 高级绑定</a>
+
+h3. <a name="simpletypes">简单类型</a>
+
+Java中所有基础和常用类型，都可以自动绑定：
+
+@int@, @long@, @boolean@, @char@, @byte@, @float@, @double@, @Integer@, @Long@, @Boolean@, @Char@, @String@, @Byte@, @Float@, @Double@.
+
+注意如果某个参数HTTP请求中没有提供，或者自动转换失败，则Object类型会被设为null，而基础类型会被设为它们的默认值。
+
+h3. <a name="date">Date</a>
+
+如果一个日期格式如下，则它可以自动转换并绑定：
+
+* yyyy-MM-dd'T'hh:mm:ss'Z' // ISO8601 + timezone
+* yyyy-MM-dd'T'hh:mm:ss" // ISO8601
+* yyyy-MM-dd
+* yyyyMMdd'T'hhmmss
+* yyyyMMddhhmmss
+* dd'/'MM'/'yyyy
+* dd-MM-yyyy
+* ddMMyyyy
+* MMddyy
+* MM-dd-yy
+* MM'/'dd'/'yy
+
+使用<code>@As</code>注解，我们可以指定日期格式。
+
+例如:
+
+bc. archives?from=21/12/1980
+
+bc. public static void articlesSince(@As("dd/MM/yyyy") Date from) {
+    List<Article> articles = Article.findBy("date >= ?", from);
+    render(articles);
+}
+
+我们可还以对不同的语种定义不同的格式，例如：
+
+bc.  public static void articlesSince(@As(lang={"fr,de","*"}, 
+        value={"dd-MM-yyyy","MM-dd-yyyy"}) Date from) {
+    List<Article> articles = Article.findBy("date >= ?", from);
+    render(articles);
+}
+
+在这个例子中，我们将法国和德国的日期定义为 @dd-MM-yyyy@ ，其它都为 @MM-dd-yyyy@. 注意语种可用逗号分隔。注意参数lang的个数必须与value的个数相等。
+
+如果没有使用<code>@As</code>注解，则Play将使用你的区域对应的默认日期格式。我们可在"conf/application.conf"中使用"date.format"为key来配置该格式.
+
+
+h3. <a name="calendar">日历(Calendar)</a>
+
+Calendar的绑定与date几乎完全一样，除了play将会根据你的区域设置选择相应的Calendar对象。<code>@Bind</code>注解也可在这里使用。
+
+h3. <a name="file">文件(File)</a>
+
+在Play中处理文件上传非常简单。使用经 @multipart/form-data@ 编码的请求将文件post到服务器端，同时使用 @java.io.File@ 来获取文件:
+
+bc. public static void create(String comment, File attachment) {
+    String s3Key = S3.post(attachment);
+    Document doc = new Document(comment, s3Key);
+    doc.save();
+    show(doc.id);
+}
+
+Play将先取得上传的文件，保存在临时目录下，并使用上传的文件名。当这个request结束后，该文件将被删除，所以我们必须将它拷贝到一个安全的目录中，否则就找不到了。
+
+上传的文件的MIME类型通常应该在HTTP request的head中，以 @Content-type@ 方式指定。但当我们通过浏览器上传文件时，一些不常见类型的文件不会指定。在这种情况下，我们可以使用 @play.libs.MimeTypes@ 类将该文件的后缀名映射到一个MIME类型上。
+
+bc. String mimeType = MimeTypes.getContentType(attachment.getName()); 
+
+@play.libs.MimeTypes@ 类在 @$PLAY_HOME/framework/src/play/libs/mime-types.properties@ 中以文件的后缀为来寻找对应的MIME类型。
+
+你也可以 通过 "自定义MIME类型":configuration#mimetype 来增加你自己的类型。
+
+
+h3. <a name="array">数组或集合</a>
+
+所有支持的类型，都可以通过数组或集合的形式取得：
+
+bc. public static void show(Long[] id) {
+    …
+}
+
+或者:
+
+bc. public static void show(List<Long> id) {
+    …
+}
+
+或者:
+
+bc. public static void show(Set<Long> id) {
+    …
+}
+
+Play还可以处理像Map<String, String>这样的绑定：
+
+bc. public static void show(Map<String, String> client) {
+    …
+}
+
+
+一个如下的query string:
+
+bc. ?client.name=John&client.phone=111-1111&client.phone=222-2222
+
+将会把变量client绑定到一个含有两个元素的map上。第一个元素的key是 @name@ ,值是 @John@ ，第二个key是 @phone@ 值是 @111-1111, 222-2222@.
+
+h3. <a name="pojo">POJO对象绑定</a>
+
+Play还可以使用简单的命名约定将参数绑定到一个pojo对象上。
+
+bc. public static void create(Client client ) {
+    client.save();
+    show(client);
+}
+
+可以使用像下面这样的query string，来调用该action以创建一个client对象：
+
+bc. ?client.name=Zenexity&client.email=contact@zenexity.fr
+
+Play创建一个Client的实例，然后将HTTP参数中与Client对象属性同名的值赋过去。无法处理的参数将被安全的忽略，类型不匹配的也将安全忽略。
+
+参数绑定是递归的，我们可以通过query string来创建一个完全的对象图：
+
+bc. ?client.name=Zenexity
+&client.address.street=64+rue+taitbout
+&client.address.zip=75009
+&client.address.country=France
+
+如果我们想更新一列对象，我们可以使用数组形式来引用对象的ID。举例来说，假设Client模型有一列Customer模型，并声明为 @List<Customer> customers@ 形式。为了更新这一列Customers，我们应该提供一个如下的query string:
+
+bc. ?client.customers[0].id=123
+&client.customers[1].id=456
+&client.customers[2].id=789
+
+
+h2. <a name="objectbinding">JPA对象绑定</a>
+
+我们可以将一个JPA对象与HTTP自动绑定起来。
+
+我们可以在HTTP参数中提供 @user.id@ 字段。当Play发现这个字段时，它会先到数据库中取出相应的实例，然后把HTTP请求中其它的参数赋过去。所以我们可以直接save它。
+
+bc. public static void save(User user) {
+    user.save(); // ok with 1.0.1
+}
+
+我们可以使用同样的方式来更新完整的对象图，但是必须对每一个子对象提供ID：
+
+bc. user.id = 1
+&user.name=morten
+&user.address.id=34
+&user.address.street=MyStreet 
+
+h2. <a name="custombinding">自定义绑定</a>
+
+绑定系统还支持自定义。
+
+h3. <a name="as">@play.data.binding.As</a>
+
+首先要讲的是<code>@play.data.binding.As</code>这个新注解，使用它，我们可以配置一个绑定。看下面的例子，我们使用它来指定一个Date的格式（该格式将被 @DateBinder@ 使用）：
+
+bc. public static void update(@As("dd/MM/yyyy") Date updatedAt) {
+    …
+}
+
+<code>@As</code>注解同样支持国际化，我们可以这样使用：
+
+bc. public static void update(
+        @As(
+            lang={"fr,de","en","*"},
+            value={"dd/MM/yyyy","dd-MM-yyyy","MM-dd-yy"}
+        )
+        Date updatedAt
+    ) {
+    …
+}
+
+<code>@As</code>注解可以与所有支持它的binder一起使用，包括你自己的定义的。例如，使用 @ListBinder@:
+
+bc. public static void update(@As(",") List<String> items) {
+    …
+}
+
+它将会把一个以逗号分隔的字符串绑定到一个 @List@ 上。
+
+h3. <a name="nobinding">@play.data.binding.NoBinding</a>
+
+新的<code>@play.data.binding.NoBinding</code>注解允许我们定义一些“不应该被绑定”的字段，以防出现安全问题。例如：
+
+bc. public class User extends Model {
+    @NoBinding("profile") public boolean isAdmin;
+    @As("dd, MM yyyy") Date birthDate;
+    public String name;
+}
+ 
+public static void editProfile(@As("profile") User user) {
+    …
+}
+
+在这种情况下， 在 @editProfile@ action中，就算某个居心不良的用户通过伪造请求提交了一个包含 @user.isAdmin=true@ 的字段, @isAdmin@ 字段也不会被绑定.
+
+h3. <a name="typebinder">play.data.binding.TypeBinder</a>
+
+*@As* 注解同样允许我们自定义一个完整的binder. 一个自定义的binder是 @TypeBinder@ 的子类，我们可以在自己的项目中定义它。例如：
+
+bc. public class MyCustomStringBinder implements TypeBinder<String> {
+ 
+    public Object bind(String name, Annotation[] anns, String value, 
+    Class clazz) {
+        return "!!" + value + "!!";
+    }
+}
+
+我们可以在任意一个action中使用它：
+
+bc. public static void anyAction(@As(binder=MyCustomStringBinder.class) 
+String name) {
+    …
+}
+
+h3. <a name="global">@play.data.binding.Global</a>
+
+我们还可以自定义一个全局的binder来处理某一个特定的类型。比如，我们给 @java.awt.Point@ 类定义了一个这样的binder:
+
+bc. @Global
+public class PointBinder implements TypeBinder<Point> {
+ 
+    public Object bind(String name, Annotation[] anns, String value, 
+    Class class) {
+        String[] values = value.split(",");
+        return new Point(
+            Integer.parseInt(values[0]),
+            Integer.parseInt(values[1])
+        );
+    }
+}
+
+你可以看到这个全局binder是一个典型的binder，只是使用了*@play.data.binding.Global*注解。我们在外部模块中定义这种binder，以在不同的项目中复用。
+
+
+h2. <a name="result">结果类型</a>
+
+一个action方法必须产生一个HTTP响应。最简单的方式就是生成一个Result对象。一旦某一个Result对象生成，该方法将立刻返回（后面的代码将不会被执行）。
+
+举例:
+
+bc. public static void show(Long id) {
+    Client client = Client.findById(id);
+    render(client);
+    System.out.println("This message will never be displayed !");
+}
+
+@render(…)@ 方法产生了一个Result对象，后面的代码都不会被执行。
+
+h3. <a name="text">返回一些文本内容</a>
+
+@renderText(…)@ 方法将产生一个简单的Result事件，该事件将直接向HTTP Response中写入一些文本数据。
+
+举例:
+
+bc. public static void countUnreadMessages() {
+    Integer unreadMessages = MessagesBox.countUnreadMessages();
+    renderText(unreadMessages);
+}
+
+你还可以使用Java的标准格式化语法来格式化文本信息：
+
+bc. public static void countUnreadMessages() {
+    Integer unreadMessages = MessagesBox.countUnreadMessages();
+    renderText("There are %s unread messages", unreadMessages);
+}
+
+h3. <a name="binary">返回二进制内容</a>
+
+为了处理如　"存储在服务器上的文件":jpa#file 这样的二进制数据，我们可使用 @renderBinary@ 方法。例如，如果我们有一个 @User@ 模型，它有一个 @play.db.jpa.Blob photo@ 属性, 我们可以使用以下方式使用保存的MIME类型向客户端发送图片数据：
+
+bc. public static void userPhoto(long id) { 
+   final User user = User.findById(id); 
+   response.setContentTypeIfNotSet(user.photo.type());
+   java.io.InputStream binaryData = user.photo.get();
+   renderBinary(binaryData);
+} 
+
+h3. <a name="attachment">把文件当作附件下载</a>
+
+我们可以通过设置HTTP头，来指导浏览器把二进制数据当作“附件”来保存。我们只需要在 @renderBinary@ 方法中传入一个文件名即可。Play会自动在响应头中把文件名设给 @Content-Disposition@ 。举例来说，前面例子中的 @User@ 模型有一个 @photoFileName@ 属性：
+
+bc. renderBinary(binaryData, user.photoFileName); 
+
+
+h3. <a name="template">执行一个模板</a>
+
+如果需要产生的内容很复杂，我们通常会在模板中来创建内容：
+
+bc. public class Clients extends Controller {
+ 
+    public static void index() {
+        render();    
+    }
+}
+
+这里有一个命名约定，Play会根据controller名和action名来寻找默认的模板路径。对于上例是：
+
+bc. app/views/Clients/index.html
+
+h4. 把数据加入到模板域中
+
+模板通常都需要数据。我们可以把这些数据放在 @renderArgs@ 对象中:
+
+bc. public class Clients extends Controller {
+ 
+    public static void show(Long id) {
+        Client client = Client.findById(id);
+        renderArgs.put("client", client);
+        render();    
+    }
+}
+
+当执行模板的时候，会自动创建 @client@ 变量。
+
+例如，我们可在模板中使用client变量:
+
+bc. <h1>Client ${client.name}</h1>
+
+h4. 将数据加入到模板类中的更简单的方法
+
+我们可以直接将数据传入到 @render(...)@ 中：
+
+bc. public static void show(Long id) {
+    Client client = Client.findById(id);
+    render(client);    
+}
+
+在这种情况下，模板中也将有一个与action中的局部变量名一样的变量(client)。
+
+我们还可以传入更多的变量：
+
+bc. public static void show(Long id) {
+    Client client = Client.findById(id);
+    render(id, client);    
+}
+
+p(note). **重要!**
+
+你只能通过这种方式来传入 **局部变量** 。
+ 
+h4. 使用其它模板
+
+如果你不想使用默认模板，可以通过在 @renderTemplate(…)@ 中的第一个参数中指定另一个模板名称。
+
+举例:
+
+bc. public static void show(Long id) {
+    Client client = Client.findById(id);
+    renderTemplate("Clients/showClient.html", id, client);    
+}
+
+h3. <a name="redirect">重定向到另一个URL</a>
+
+@redirect(…)@ 方法会产生一个重定向事件，接着会产生一个HTTP Redirect响应。
+
+bc. public static void index() {
+    redirect("http://www.zenexity.fr");
+}
+
+
+h3. <a name="chaining">Action链</a>
+
+在play中没有Servlet API @forward@ 的等价物。每一个HTTP request只能调用一个action。如果我们需要调用另一个，必须通过重定向，让浏览器访问另一个URL来访问它。这样的话，浏览器的URL始终与被执行的action保持一致，实现 **Back/Forward/Refresh** 的管理就容易多了。
+
+你可以发送到任何一个action的Redirect，只需要直接在Java中调用该action即可。该调用将会自动被Play拦截，并生成一个HTTP重定向。
+
+举例:
+
+bc. public class Clients extends Controller {
+ 
+    public static void show(Long id) {
+        Client client = Client.findById(id);
+        render(client);
+    }
+ 
+    public static void create(String name) {
+        Client client = new Client(name);
+        client.save();
+        show(client.id);
+    }
+}
+
+With these routes:
+
+bc. GET    /clients/{id}            Clients.show
+POST   /clients                 Clients.create 
+
+* 浏览器向 @/clients@ URL发送一个POST。
+* Router调用 @Clients@ controller的 @create@ action.
+* Action方法直接调用 @show@ 方法
+* 该Java调用被拦截，Router根据它产生一个调用Clients.show(id)所需要的新URL。
+* HTTP响应为 @302 Location:/clients/3132@.
+* 浏览器接着发送 @GET /clients/3132@.
+* …
+
+h3. <a name="encoding">自定义编码集</a>
+
+Play强调使用UTF-8，但有时候某些响应，或者整个应用的响应，都必须使用一个不同的编码集。
+
+h4. 给当前response定义encoding
+
+要改变当前response的编码集，我们需要在controller中这样做：
+
+bc. response.encoding = "ISO-8859-1";
+
+如果要使用一个与服务器默认的不同的编码集，我们必须在form中包含两次encoding/charset。一次在 @accept-charset@ 属性中，一次在一个hidden类型的字段 @_charset_@ 中。 @accept-charset@ 告诉浏览器使用哪种字符集，而 @_charset_@ 告诉play使用哪种字符集：
+
+bc. <form action="@{application.index}" method="POST" accept-charset="ISO-8859-1">
+    <input type="hidden" name="_charset_" value="ISO-8859-1">
+</form>
+
+h4. 自定义整个程序的编码集
+
+配置"application.web_encoding":configuration#application.web_encoding 来指定Play使用哪种编码集。
+
+
+h2. <a name="interceptions">拦截器(Interceptions)</a>
+
+一个controller可以定义多个拦截器方法。拦截器作用于一个controller及其所有子类的所有action方法上。对于定义一些所有action共用的操作时，使用拦截器非常有用，比如：检查用户是否已经登录（有没有访问权），截入request范围内的数据，等等。
+
+这些方法必须为 @static@ ，但不一定是 @public@ 。你必须给它们增加合适的注解以表明它们是拦截器。
+
+h3. <a name="before">@Before</a>
+
+如果方法上有<code>@Before</code>注解，则它将在该controller中的每一个action被调用前被执行。
+
+所以可以进行一下安全检查:
+
+bc. public class Admin extends Application {
+ 
+    @Before
+    static void checkAuthentification() {
+        if(session.get("user") == null) login();
+    }
+ 
+    public static void index() {
+        List<User> users = User.findAll();
+        render(users);
+    }
+    …
+}
+
+如果你想给某些方法开绿灯，可按下面的方法排除一些action：
+
+bc. public class Admin extends Application {
+ 
+    @Before(unless="login")
+    static void checkAuthentification() {
+        if(session.get("user") == null) login();
+    }
+ 
+    public static void index() {
+        List<User> users = User.findAll();
+        render(users);
+    }
+ 
+    …
+}
+
+或者仅对于某些方法调用该拦截器，可使用"only"：
+
+bc. public class Admin extends Application {
+ 
+    @Before(only={"login","logout"})
+    static void doSomething() {  
+        …  
+    }
+    …
+}
+
+<code>@After</code>, <code>@Before</code> 和 <code>@Finally</code>这三个注解，都提供了  @unless@ 和 @only@ 参数。
+
+h3. <a name="after">@After</a>
+
+使用<code>@After</code>注解的方法，将在该Controller中的每一个action之后被调用。
+
+bc. public class Admin extends Application {
+ 
+    @After
+    static void log() {
+        Logger.info("Action executed ...");
+    }
+ 
+    public static void index() {
+        List<User> users = User.findAll();
+        render(users);
+    }
+ 
+    …
+}
+
+h3. <a name="catch">@Catch</a>
+
+使用了<code>@Catch</code>注解的方法，将会在某个抛出了它所指定的异常时，被调用。异常类型将被传入到@Catch方法的参数中。
+
+bc. public class Admin extends Application {
+	
+    @Catch(IllegalStateException.class)
+    public static void logIllegalState(Throwable throwable) {
+        Logger.error("Illegal state %s…", throwable);
+    }
+    
+    public static void index() {
+        List<User> users = User.findAll();
+        if (users.size() == 0) {
+            throw new IllegalStateException("Invalid database - 0 users");
+        }
+        render(users);
+    }
+}
+
+与Java的异常处理一样，我们可以使用一个超类来捕获更多的异常类型。如果我们有多个catch方法，可以通过指定其 **priority** 来定义它们的执行顺序（priority为1的最先执行）。
+
+bc. public class Admin extends Application {
+ 
+    @Catch(value = Throwable.class, priority = 1)
+    public static void logThrowable(Throwable throwable) {
+        // Custom error logging…
+        Logger.error("EXCEPTION %s", throwable);
+    }
+ 
+    @Catch(value = IllegalStateException.class, priority = 2)
+    public static void logIllegalState(Throwable throwable) {
+        Logger.error("Illegal state %s…", throwable);
+    }
+ 
+    public static void index() {
+        List<User> users = User.findAll();
+        if(users.size() == 0) {
+            throw new IllegalStateException("Invalid database - 0 users");
+        }
+        render(users);
+    }
+}
+
+
+h3. <a name="finally">@Finally</a>
+
+使用<code>@Finally</code>注解的方法，总是在该Controller中每一个action执行完之后再执行。不论action执行成功或者失败，它都将会被执行。跟Java中finally的意思相同。
+
+bc. public class Admin extends Application {
+ 
+    @Finally
+    static void log() {
+        Logger.info("Response contains : " + response.out);
+    }
+ 
+    public static void index() {
+        List<User> users = User.findAll();
+        render(users);
+    }
+    …
+}
+
+如果@Finally方法有一个Throwable类型的参数，则异常对象会被传入（如果有的话）：
+
+bc. public class Admin extends Application {
+ 
+    @Finally
+    static void log(Throwable e) {
+        if( e == null ){
+            Logger.info("action call was successful");
+        } else{
+            Logger.info("action call failed", e);
+        }
+    }
+ 
+    public static void index() {
+        List<User> users = User.findAll();
+        render(users);
+    }
+    …
+}
+
+
+h3. <a name="hierarchy">Controller继承</a>
+
+如果一个Controller类是另一个的子类，则父类中定义的拦截器同样对子类有效。
+
+h3. <a name="with">通过@With注解，加入更多的拦截器</a>
+
+因为Java中没有多重继承，所以通过Controller继承来共用拦截器很难。但是通过<code>@With</code>注解，我们可以把一些拦截器定义在一个完全不同的类中，然后在当前Controller中使用它们。
+
+举例:
+
+bc. public class Secure extends Controller {
+    
+    @Before
+    static void checkAuthenticated() {
+        if(!session.containsKey("user")) {
+            unAuthorized();
+        }
+    }
+}    
+
+把它加到另一个Controller中:
+
+bc. @With(Secure.class)
+public class Admin extends Application {
+    
+    …
+}
+
+h2. <a name="session">Session和Flash scopes</a>
+
+如果你打算在多个HTTP请求之间共用数据，可以把它们保存在Session或Flash域中。保存在Session中的数据，对于整个user session都可用，而保存在flash域中的数据，则仅仅在下一个请求可用。
+
+有一点非常重要，需要理解的是，在play中，Session和Flash数据并没有保存在服务器端，而是通过Cookie被加入到每一个HTTP请求中。所以能保存的数据量非常小(不超过4KB），并且只能保存字符串。
+
+当然，cookies都使用了一个密钥进行了加密，所以客户端无法修改cookie数据（否则该数据将无效）。Play的session不是用来当作数据缓存。如果我们需要缓存与session相关的某些数据，可以使用Play内置的缓存机制，并使用 *session.getId()* 作为key来保存。
+
+举例:
+
+bc. public static void index() {
+    List messages = Cache.get(session.getId() + "-messages", List.class);
+    if(messages == null) {
+        // Cache miss
+        messages = Message.findByUser(session.get("user"));
+        Cache.set(session.getId() + "-messages", messages, "30mn");
+    }
+    render(messages);
+}
+
+当我们关闭浏览器时，session数据将过期，除非我们通过  "application.session.maxAge":configuration#application.session.maxAge 进行了配置。
+
+缓存使用了与传统Servlet HTTP session不同的定义，所以我们不能假设这些数据只是在cache中。这将强迫我们处理cache中没有数据的情况，并强迫我们的程序是完全无状态的。
+
+p(note). **继承讨论**
+ 
+MVC中下一个重要的层是视图(View)层，Play通过 %(next)"模板引擎":templates% 实现了一个高效的模板系统。
