@@ -1,0 +1,253 @@
+h1. 领域对象模型（domain object model）
+
+在Play程序中，模型(model)占据了核心地位。它是程序操作的信息的特定领域的表现方式。
+
+Martin Fowler这样定义模型：
+
+bq. 负责表达业务概念，业务状态信息以及业务规则。尽管保存业务状态的技术细节是有基础设施层实现的，但是反应业务情况的状态是有本层控制并且使用的。领域层是业务软件的核心。
+
+Java中有一个常见的反模式：仅仅把模型当作一个个的简单的Java Bean，里面就只有一些字段和getter/setter，然后把业务逻辑代码放到一个Service层中，在Service层中处理模型对象。
+
+Martin fowler之后把这种反模式称为 "贫血模型":http://www.martinfowler.com/bliki/AnemicDomainModel.html: 
+
+bq. 贫血模型一个明显的特征是它仅仅是看上去和领域模型一样，都拥有对象、属性、对象间通过关系关联。但是当你观察模型所持有的业务逻辑时，你会发现，贫血模型中除了一些getter和setter方法，几乎没有其他业务逻辑。这种情况事实上是由一些设计规则中(design rules)规定不要把业务逻辑放到“领域模型”中造成的，取而代之的是把所有的业务逻辑都封装到众多service中。这些service对象在“领域对象”(领域层)之上形成一个service层，而把“领域对象”当做数据使用。
+ 
+贫血模型从根本上就违背了面向对象设计将属性与操作融合的思想。贫血模型就是我们纯粹的面向对象忠实者(比如我和Eric)从Smalltalk早期就极力反对的面向过程化设计的风格。更糟糕的是，很多人认为贫血模型就是真正的面向对象，进而也就完全领悟不到面向对象设计的真谛。
+
+（注：这里引用的Martin fowler的两段话的翻译，均来自http://www.turingbook.com/article/details/25)
+
+实际上想在Java中实现非贫血的模型，有时候是一件很困难的事情（因为Java的语法限制）。Play是通过对类进行增强而实现的。
+
+h2. <a name="properties">属性(Properties)模拟</a>
+
+如果我们去看Play的示例程序，就会发现很多类都声明了public的变量。如果你是一个有经验的Java程序员，看到这一定会觉得不可思议。如果在Java（以及其它面向对象语言）中，把字段声明为private并且提供访问器和修改器才是最佳实践。因为“封装”是面向对象中的一个重要观念。
+
+Java没有真正的内置的属性定义系统。它使用了一个命名规范叫Java Bean: Java对象的一个属性，即是一对getXxx/setXxx方法。如果这个属性是只读的，那就只提供一个getter.
+
+虽然这套系统可以工作，但写起来非常繁琐。每一个属性，你都需要先声明一个private的变量，再写两个方法。而且，大多数的getter和setter都是非常简单而且都一样：
+
+bc. private String name;
+ 
+public String getName() {
+    return name;
+}
+ 
+public void setName(String value) {
+    name = value;
+}
+
+Play的Model系统则可以自动生成这种模式，让我们的代码看起来更干净一些。实际上所有的public变量都会变成属性。这里有个约定：一个类所有的 **public**, **non-static**, **non-final** 字段，都将被看作一个属性。
+
+例如，当我们声明了一个类：
+
+bc. public class Product {
+
+    public String name;
+    public Integer price;
+}
+
+实际上被载入的类会变成这样：
+
+bc. public class Product {
+ 
+    public String name;
+    public Integer price;
+ 
+    public String getName() {
+        return name;
+    }
+ 
+    public void setName(String name) {
+        this.name = name;
+    }
+ 
+    public Integer getPrice() {
+        return price;
+    }
+ 
+    public void setPrice(Integer price) {
+        this.price = price;
+    }
+}
+
+当你想访问一个属性时，你可以直接写成：
+
+bc. product.name = "My product";
+product.price = 58;
+
+在载入时，它将被替换为：
+
+bc. product.setName("My product");
+product.setPrice(58);
+
+p(note). **警告!**
+ 
+ 如果你依赖于Play的自动生成，你没有办法直接使用getter和setter来访问属性，因为这些方法是在运行时才生成的。所以，当你在代码中调用getter/setter，编译器会提醒你找不到该方法。
+
+当然，你也可以自己定义getter和setter，此时play会使用你自己定义的方法。
+
+所以，如果想来保护Product类的price属性，我们可以写成：
+
+bc. public class Product {
+ 
+    public String name;
+    public Integer price;
+ 
+    public void setPrice(Integer price) {
+        if (price < 0) {
+            throw new IllegalArgumentException("Price can’t be negative!");
+        }
+        this.price = price;
+    }
+}
+
+如果我们给它赋一个负值，将会抛出一个异常：
+
+bc. product.price = -10: // Oops! IllegalArgumentException
+
+Play将总是使用已经存在的getter和setter。看以下代码：
+
+bc. @Entity
+public class Data extends Model {
+ 
+   @Required
+   public String value;
+   public Integer anotherValue;
+ 
+   public Integer getAnotherValue() {
+       if(anotherValue == null) {
+           return 0;
+       }
+       return anotherValue;
+   }
+ 
+   public void setAnotherValue(Integer value) {
+       if(value == null) {
+           this.anotherValue = null;
+       } else {
+           this.anotherValue = value * 2;
+       }
+   }
+ 
+   public String toString() {
+       return value + " - " + anotherValue;
+   }
+ 
+}
+
+从另一个类中进行判断：
+
+bc. Data data = new Data();
+data.anotherValue = null;
+assert data.anotherValue == 0;
+data.anotherValue = 4
+assert data.anotherValue == 8;
+
+一切运行正常。因为增强的类遵守了Java Bean的约定，所以你在一个使用JavaBean规范的其它库里使用它，也没问题。
+
+h2. <a name="database">设置一个数据库来持久化你的模型对象</a>
+
+通常你都需要把模型对象中的数据持久化，最常用的方法就是使用数据库。
+
+在开发阶段，我们可以快速启动一个嵌入式的内存数据库，或者一个文件数据库（在我们项目中的一个子目录中），把数据保存进去。我们可使用 "配置数据库":configuration#db 来进行配置。
+
+Play下载包中，已经包含了H2和MySQL数据库的JDBC驱动，位于 @$PLAY_HOME/framework/lib/@ 目录。如果你使用PostgreSQL或者Oracle，你必须把相应的JDBC驱动程序放进去，或者放到你的程序的 @lib/@ 目录中。
+
+我们需要在conf/application.conf文件中，配置与数据库相关的连接信息，比如 "db.url":configuration#db.url, "db.driver":configuration#db.driver, "db.user":configuration#db.user 和 "db.pass":configuration#db.pass:
+
+bc. db.url=jdbc:mysql://localhost/test
+db.driver=com.mysql.jdbc.Driver
+db.user=root
+db.pass=
+
+我们还可以使用 "jpa.dialect":configuration#jpa.dialect 来配置一个JPA方言(dialect).
+
+在代码中，我们可以从 @play.db.DB@ 中取得 @java.sql.Connection@ 对象，然后按标准方式使用它。
+
+bc. Connection conn = DB.getConnection();
+conn.createStatement().execute("select * from products");
+
+h2. <a name="hibernate">使用Hibernate来持久化模型对象</a>
+
+我们可以使用Hibernate(通过JPA)来自动将Java对象持久化到数据库中。
+
+当我们把<code>@javax.persistence.Entity</code>注解加到某个Java对象上来定义JPA实体时，Play会自动开启JPA实体管理器。
+
+bc. @Entity
+public class Product {
+ 
+    public String name;
+    public Integer price;
+}
+
+p(note). **警告!**
+
+一个常见的错误是使用了Hibernate的<code>@Entity</code>注解。我们应该使用JPA中的<code>@Entity</code>才对，因为Play是通过JPA的API来使用Hibernate的。
+
+然后我们可以通过 @play.db.jpa.JPA@ 来取得一个EntityManager:
+
+bc. EntityManager em = JPA.em();
+em.persist(product);
+em.createQuery("from Product where price > 50").getResultList();
+
+Play提供了一个非常好用的基类来处理JPA相关的操作。我们只需要继承 @play.db.jpa.Model@ 即可。
+
+bc. @Entity
+public class Product extends Model {
+ 
+    public String name;
+    public Integer price;
+}
+
+然后，我们就可以直接使用 @Product@ 上的一些简单方法，来对它进行操作：
+
+bc. Product.find("price > ?", 50).fetch();
+Product product = Product.findById(2L);
+product.save();
+product.delete();
+
+h3. <a name="multiple">支持多数据库</a>
+
+我们可以配置Play来使用多个（独立的）数据库。
+
+在 @conf/application.conf@ 中，以'db.'开头的key是用来配置默认数据库的（比如 @db.url@ ）。如果想再配置一个其它的数据库，需要在'db'后面增加一个下划线，和一个名称。如下：
+
+bc. db_other.url=jdbc:mysql://localhost/test
+db_other.driver=com.mysql.jdbc.Driver
+db_other.user=root
+db_other.pass=
+
+我们定义了一个名为'other'的数据库。要对它进行其它的配置，则这样做：
+
+bc. db_other.jpa.dialect=<dialect>
+
+我们可以在程序中，这样取得该数据库的连接：
+
+bc. Connection conn = DB.getDBConfig("other").getConnection()
+
+@DB.getDBConfig(configName)@ 返回一个含有与 @play.db.DB@ 类中静态方法相同方法的对象。
+
+h2. <a name="stateless">保持模型为“无状态”(stateless)</a>
+
+Play设计成“完全无共享”的架构，以保证整个程序完全没有状态。这样做，可以让我们同时跑任意多个相同的程序，同时向外提供服务（集群）。
+
+为了达到模型无状态，应该注意什么？ **不要在Java heap中保存多个请求共享的模型对象**
+
+h4. 如果想在多个请求中共享数据，我们有多种选择：
+
+# 如果数据很小很简单，直接把它保存在session或flash中。但要注意，每一个不能超过4KB，并且只能是String
+# 把数据持久化（例如保存在数据库中）。例如，我们需要创建一个跨越多个请求的"wizard"对象：
+#* 当第一个请求到达时，初始化该对象，并把它保存在数据库中
+#* 把新创建的对象的ID值放到flash域
+#* 当新请求到来时，从flash域中取出该ID，再到数据库中取出对应的数据，更新并重新保存
+# 把数据保存在非持久化设备（如Cache）中。例如，还是创建那个跨越多个请求的"wizard"对象：
+#* 当第一个请求到达时，初始化该对象，并把它保存在Cache中
+#* 把新创建的对象的ID值放到flash域
+#* 当新请求到来时，从flash域中取出该ID，再从Cache中取出对应的数据，更新并重新保存在cache中
+#* 当所有相关请求结束时，将该对象持久化（比如保存在数据库中）
+
+虽然Cache是一个不可靠的保存处，但你把一个对象保存进去后，通常能够再取出来。在某些情况下，Cache是一个可以用来替代Java Servlet session的好选择。
+
+p(note). **继续讨论**
+ 
+现在我们将讲解如果使用 %(next)"JPA persistence":jpa% 来持久化模型。
